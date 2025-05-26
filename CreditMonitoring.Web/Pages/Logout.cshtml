@@ -1,0 +1,17 @@
+@page "/logout"
+@using Microsoft.AspNetCore.Authentication
+
+@{
+    await HttpContext.SignOutAsync("Cookies");
+    Response.Redirect("/");
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>登出中...</title>
+</head>
+<body>
+    <p>正在登出...</p>
+</body>
+</html>

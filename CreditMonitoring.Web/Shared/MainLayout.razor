@@ -2,19 +2,36 @@
 
 <PageTitle>信用監控系統</PageTitle>
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+<AuthorizeView>
+    <Authorized>
+        <div class="page">
+            <div class="sidebar">
+                <NavMenu />
+            </div>
 
-    <main>
-        <div class="top-row px-4">
-            <LoginDisplay />
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">關於</a>
+            <main>
+                <div class="top-row px-4">
+                    <LoginDisplay />
+                    <a href="https://docs.microsoft.com/aspnet/" target="_blank">關於</a>
+                </div>
+
+                <article class="content px-4">
+                    @Body
+                </article>
+            </main>
         </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="page">
+            <main>
+                <div class="top-row px-4">
+                    <LoginDisplay />
+                </div>
+                <article class="content px-4">
+                    <h1>歡迎使用信用監控系統</h1>
+                    <p>請登入以存取系統功能。</p>
+                </article>
+            </main>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>

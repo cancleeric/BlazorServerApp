@@ -1,8 +1,6 @@
 @page "/case-details/{AccountId:int}"
 @attribute [Authorize]
-@using CreditMonitoring.Web.Models
-@using CreditMonitoring.Web.Services
-@inject ICreditMonitoringService CreditService
+@inject IWebCreditMonitoringService CreditService
 @inject NavigationManager Navigation
 
 <h3>案件詳情</h3>
@@ -124,30 +122,30 @@ else if (caseDetail != null)
                     <div class="accordion-item">
                         <h2 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                    data-bs-target="#guarantor-@guarantor.Guarantor.Id">
-                                @guarantor.Guarantor.Name - 總擔保金額: @guarantor.TotalGuaranteeAmount.ToString("C")
+                                    data-bs-target="#guarantor-@guarantor.Id">
+                                @guarantor.Name - 擔保金額: @guarantor.GuaranteeAmount.ToString("C")
                             </button>
                         </h2>
-                        <div id="guarantor-@guarantor.Guarantor.Id" class="accordion-collapse collapse">
+                        <div id="guarantor-@guarantor.Id" class="accordion-collapse collapse">
                             <div class="accordion-body">
                                 <dl class="row">
                                     <dt class="col-sm-3">身份證號</dt>
-                                    <dd class="col-sm-9">@guarantor.Guarantor.IdNumber</dd>
+                                    <dd class="col-sm-9">@guarantor.IdNumber</dd>
                                     
                                     <dt class="col-sm-3">聯絡電話</dt>
-                                    <dd class="col-sm-9">@guarantor.Guarantor.ContactNumber</dd>
+                                    <dd class="col-sm-9">@guarantor.ContactNumber</dd>
                                     
                                     <dt class="col-sm-3">地址</dt>
-                                    <dd class="col-sm-9">@guarantor.Guarantor.Address</dd>
+                                    <dd class="col-sm-9">@guarantor.Address</dd>
                                     
                                     <dt class="col-sm-3">關係</dt>
-                                    <dd class="col-sm-9">@guarantor.Guarantor.Relationship</dd>
+                                    <dd class="col-sm-9">@guarantor.Relationship</dd>
                                     
                                     <dt class="col-sm-3">信用分數</dt>
-                                    <dd class="col-sm-9">@guarantor.Guarantor.CreditScore</dd>
+                                    <dd class="col-sm-9">@guarantor.CreditScore</dd>
                                 </dl>
 
-                                <h6 class="mt-3">擔保傳票明細</h6>
+                                <h6 class="mt-3">相關傳票</h6>
                                 <div class="table-responsive">
                                     <table class="table table-sm">
                                         <thead>
@@ -155,20 +153,22 @@ else if (caseDetail != null)
                                                 <th>傳票號碼</th>
                                                 <th>日期</th>
                                                 <th>金額</th>
-                                                <th>擔保金額</th>
                                                 <th>狀態</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach (var voucher in guarantor.GuaranteedVouchers)
+                                            @foreach (var voucherGuarantor in guarantor.VoucherGuarantors)
                                             {
-                                                <tr class="@(voucher.Voucher.Status != VoucherStatus.Normal ? "table-warning" : "")">
-                                                    <td>@voucher.Voucher.VoucherNumber</td>
-                                                    <td>@voucher.Voucher.IssueDate.ToShortDateString()</td>
-                                                    <td>@voucher.Voucher.Amount.ToString("C")</td>
-                                                    <td>@voucher.Guarantors.First(g => g.GuarantorId == guarantor.Guarantor.Id).GuaranteeAmount.ToString("C")</td>
-                                                    <td>@voucher.Voucher.Status</td>
-                                                </tr>
+                                                var voucher = caseDetail.Vouchers.FirstOrDefault(v => v.Id == voucherGuarantor.VoucherId);
+                                                if (voucher != null)
+                                                {
+                                                    <tr class="@(voucher.Status != VoucherStatus.Normal ? "table-warning" : "")">
+                                                        <td>@voucher.VoucherNumber</td>
+                                                        <td>@voucher.IssueDate.ToShortDateString()</td>
+                                                        <td>@voucher.Amount.ToString("C")</td>
+                                                        <td>@voucher.Status</td>
+                                                    </tr>
+                                                }
                                             }
                                         </tbody>
                                     </table>

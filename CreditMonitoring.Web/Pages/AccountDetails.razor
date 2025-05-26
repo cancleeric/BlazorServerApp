@@ -1,8 +1,6 @@
 @page "/account-details/{AccountId:int}"
 @attribute [Authorize]
-@using CreditMonitoring.Common.Models
-@using CreditMonitoring.Web.Services
-@inject ICreditMonitoringService CreditService
+@inject IWebCreditMonitoringService CreditService
 @inject NavigationManager Navigation
 
 <h3>帳戶詳情</h3>

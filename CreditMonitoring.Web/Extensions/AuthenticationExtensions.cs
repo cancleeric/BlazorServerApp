@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using System.Security.Claims;
 using CreditMonitoring.Web.Models;
 
 namespace CreditMonitoring.Web.Extensions;

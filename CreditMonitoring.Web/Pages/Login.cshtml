@@ -1,0 +1,35 @@
+@page "/login"
+@using Microsoft.AspNetCore.Authentication
+@using System.Security.Claims
+
+@{
+    // 在開發環境中自動登入
+    if (HttpContext.Request.Method == "GET")
+    {
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, "測試用戶"),
+            new Claim(ClaimTypes.Email, "test@example.com"),
+            new Claim("BankCode", "BOT"),
+            new Claim("BranchCode", "001"),
+            new Claim("EmployeeId", "EMP001")
+        };
+
+        var identity = new ClaimsIdentity(claims, "Cookies");
+        var principal = new ClaimsPrincipal(identity);
+
+        await HttpContext.SignInAsync("Cookies", principal);
+        Response.Redirect("/");
+        return;
+    }
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>登入中...</title>
+</head>
+<body>
+    <p>正在登入...</p>
+</body>
+</html>

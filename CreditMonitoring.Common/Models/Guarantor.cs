@@ -9,6 +9,7 @@ public class Guarantor
     public string ContactNumber { get; set; }
     public string Address { get; set; }
     public string Relationship { get; set; }  // 與借款人關係
+    public decimal GuaranteeAmount { get; set; }  // 保證金額
     public int CreditScore { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedDate { get; set; }

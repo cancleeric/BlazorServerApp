@@ -1,0 +1,14 @@
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <RouteView RouteData="@routeData" DefaultLayout="@typeof(CreditMonitoring.Web.Shared.MainLayout)" />
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <PageTitle>找不到頁面</PageTitle>
+            <LayoutView Layout="@typeof(CreditMonitoring.Web.Shared.MainLayout)">
+                <p role="alert">抱歉，此頁面不存在。</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>
