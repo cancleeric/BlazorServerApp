@@ -1,0 +1,223 @@
+@page "/case-details/{AccountId:int}"
+@attribute [Authorize]
+@using CreditMonitoring.Web.Models
+@using CreditMonitoring.Web.Services
+@inject ICreditMonitoringService CreditService
+@inject NavigationManager Navigation
+
+<h3>案件詳情</h3>
+
+@if (loading)
+{
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">載入中...</span>
+        </div>
+    </div>
+}
+else if (error != null)
+{
+    <div class="alert alert-danger">
+        <h4>錯誤</h4>
+        <p>@error</p>
+    </div>
+}
+else if (caseDetail != null)
+{
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5>貸款帳戶資訊</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">帳戶號碼</dt>
+                        <dd class="col-sm-8">@caseDetail.LoanAccount.AccountNumber</dd>
+                        
+                        <dt class="col-sm-4">客戶名稱</dt>
+                        <dd class="col-sm-8">@caseDetail.LoanAccount.CustomerName</dd>
+                        
+                        <dt class="col-sm-4">貸款金額</dt>
+                        <dd class="col-sm-8">@caseDetail.LoanAccount.LoanAmount.ToString("C")</dd>
+                        
+                        <dt class="col-sm-4">當前信用分數</dt>
+                        <dd class="col-sm-8">@caseDetail.LoanAccount.CreditScore</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5>經辦人資訊</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">姓名</dt>
+                        <dd class="col-sm-8">@caseDetail.BankOfficer.Name</dd>
+                        
+                        <dt class="col-sm-4">部門</dt>
+                        <dd class="col-sm-8">@caseDetail.BankOfficer.Department</dd>
+                        
+                        <dt class="col-sm-4">聯絡電話</dt>
+                        <dd class="col-sm-8">@caseDetail.BankOfficer.ContactNumber</dd>
+                        
+                        <dt class="col-sm-4">電子郵件</dt>
+                        <dd class="col-sm-8">@caseDetail.BankOfficer.Email</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <h5>信用警報歷史</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>類型</th>
+                            <th>描述</th>
+                            <th>分數變化</th>
+                            <th>嚴重程度</th>
+                            <th>關聯傳票</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var alert in caseDetail.CreditAlerts.OrderByDescending(a => a.AlertDate))
+                        {
+                            <tr>
+                                <td>@alert.AlertDate.ToLocalTime()</td>
+                                <td>@alert.AlertType</td>
+                                <td>@alert.Description</td>
+                                <td class="@(alert.CurrentCreditScore < alert.PreviousCreditScore ? "text-danger" : "text-success")">
+                                    @(alert.CurrentCreditScore - alert.PreviousCreditScore)
+                                </td>
+                                <td>
+                                    <span class="badge bg-@GetAlertColor(alert.Severity)">
+                                        @alert.Severity
+                                    </span>
+                                </td>
+                                <td>@(alert.Voucher?.VoucherNumber ?? "-")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <h5>擔保人資訊</h5>
+        </div>
+        <div class="card-body">
+            <div class="accordion" id="guarantorsAccordion">
+                @foreach (var guarantor in caseDetail.Guarantors)
+                {
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#guarantor-@guarantor.Guarantor.Id">
+                                @guarantor.Guarantor.Name - 總擔保金額: @guarantor.TotalGuaranteeAmount.ToString("C")
+                            </button>
+                        </h2>
+                        <div id="guarantor-@guarantor.Guarantor.Id" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                <dl class="row">
+                                    <dt class="col-sm-3">身份證號</dt>
+                                    <dd class="col-sm-9">@guarantor.Guarantor.IdNumber</dd>
+                                    
+                                    <dt class="col-sm-3">聯絡電話</dt>
+                                    <dd class="col-sm-9">@guarantor.Guarantor.ContactNumber</dd>
+                                    
+                                    <dt class="col-sm-3">地址</dt>
+                                    <dd class="col-sm-9">@guarantor.Guarantor.Address</dd>
+                                    
+                                    <dt class="col-sm-3">關係</dt>
+                                    <dd class="col-sm-9">@guarantor.Guarantor.Relationship</dd>
+                                    
+                                    <dt class="col-sm-3">信用分數</dt>
+                                    <dd class="col-sm-9">@guarantor.Guarantor.CreditScore</dd>
+                                </dl>
+
+                                <h6 class="mt-3">擔保傳票明細</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>傳票號碼</th>
+                                                <th>日期</th>
+                                                <th>金額</th>
+                                                <th>擔保金額</th>
+                                                <th>狀態</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var voucher in guarantor.GuaranteedVouchers)
+                                            {
+                                                <tr class="@(voucher.Voucher.Status != VoucherStatus.Normal ? "table-warning" : "")">
+                                                    <td>@voucher.Voucher.VoucherNumber</td>
+                                                    <td>@voucher.Voucher.IssueDate.ToShortDateString()</td>
+                                                    <td>@voucher.Voucher.Amount.ToString("C")</td>
+                                                    <td>@voucher.Guarantors.First(g => g.GuarantorId == guarantor.Guarantor.Id).GuaranteeAmount.ToString("C")</td>
+                                                    <td>@voucher.Voucher.Status</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int AccountId { get; set; }
+
+    private CaseDetailViewModel? caseDetail;
+    private bool loading = true;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            loading = true;
+            caseDetail = await CreditService.GetCaseDetailAsync(AccountId);
+        }
+        catch (Exception ex)
+        {
+            error = $"獲取案件詳情時發生錯誤: {ex.Message}";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private string GetAlertColor(AlertSeverity severity) => severity switch
+    {
+        AlertSeverity.Low => "success",
+        AlertSeverity.Medium => "warning",
+        AlertSeverity.High => "danger",
+        AlertSeverity.Critical => "dark",
+        _ => "secondary"
+    };
+} 

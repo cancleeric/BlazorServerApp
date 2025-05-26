@@ -1,0 +1,9 @@
+/Users/apple/Work/BlazorServerApp/CreditMonitoring.Web/obj/Debug/net8.0/CreditMonitoring.Web.csproj.AssemblyReference.cache
+/Users/apple/Work/BlazorServerApp/CreditMonitoring.Web/obj/Debug/net8.0/CreditMonitoring.Web.GeneratedMSBuildEditorConfig.editorconfig
+/Users/apple/Work/BlazorServerApp/CreditMonitoring.Web/obj/Debug/net8.0/CreditMonitoring.Web.AssemblyInfoInputs.cache
+/Users/apple/Work/BlazorServerApp/CreditMonitoring.Web/obj/Debug/net8.0/CreditMonitoring.Web.AssemblyInfo.cs
+/Users/apple/Work/BlazorServerApp/CreditMonitoring.Web/obj/Debug/net8.0/CreditMonitoring.Web.csproj.CoreCompileInputs.cache
+/Users/apple/Work/BlazorServerApp/CreditMonitoring.Web/obj/Debug/net8.0/CreditMonitoring.Web.MvcApplicationPartsAssemblyInfo.cs
+/Users/apple/Work/BlazorServerApp/CreditMonitoring.Web/obj/Debug/net8.0/CreditMonitoring.Web.MvcApplicationPartsAssemblyInfo.cache
+/Users/apple/Work/BlazorServerApp/CreditMonitoring.Web/obj/Debug/net8.0/CreditMonitoring.Web.RazorAssemblyInfo.cache
+/Users/apple/Work/BlazorServerApp/CreditMonitoring.Web/obj/Debug/net8.0/CreditMonitoring.Web.RazorAssemblyInfo.cs

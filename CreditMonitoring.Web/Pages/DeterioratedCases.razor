@@ -1,0 +1,134 @@
+@page "/deteriorated-cases"
+@attribute [Authorize]
+@using CreditMonitoring.Web.Models
+@using CreditMonitoring.Web.Services
+@inject ICreditMonitoringService CreditService
+@inject NavigationManager Navigation
+
+<h3>信用惡化案件列表</h3>
+
+<div class="alert alert-info">
+    <h4>案件監控</h4>
+    <p>此頁面顯示所有需要關注的信用惡化案件。</p>
+</div>
+
+@if (loading)
+{
+    <div class="d-flex justify-content-center">
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">載入中...</span>
+    </div>
+</div>
+}
+else if (error != null)
+{
+    <div class="alert alert-danger">
+    <h4>錯誤</h4>
+    <p>@error</p>
+</div>
+}
+else
+{
+    <div class="row mb-3">
+        <div class="col">
+            <div class="input-group">
+            <input type="text" class="form-control" placeholder="搜尋案件..." @bind="searchText" @bind:event="oninput" />
+            <button class="btn btn-outline-secondary" @onclick="HandleSearch">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
+    <div class="col-auto">
+        <div class="btn-group">
+            <button class="btn btn-outline-primary @(filterSeverity == null ? "active" : "")"
+                @onclick="() => FilterBySeverity(null)">
+                全部
+            </button>
+            @foreach (var severity in Enum.GetValues<AlertSeverity>())
+                {
+                    <button class="btn btn-outline-primary @(filterSeverity == severity ? "active" : "")"
+                        @onclick="() => FilterBySeverity(severity)">
+                        @severity
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>帳戶號碼</th>
+                <th>客戶名稱</th>
+                <th>貸款金額</th>
+                <th>當前分數</th>
+                <th>分數變化</th>
+                <th>警報數量</th>
+                <th>最新警報日期</th>
+                <th>問題傳票</th>
+                <th>嚴重程度</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+          
+
+@code {
+                            private List<DeterioratedCaseViewModel> cases = new();
+private bool loading = true;
+private string? error;
+private string searchText = "";
+private AlertSeverity? filterSeverity;
+
+protected override async Task OnInitializedAsync()
+{
+    try
+    {
+        loading = true;
+        cases = await CreditService.GetDeterioratedCasesAsync();
+    }
+    catch (Exception ex)
+    {
+        error = $"獲取數據時發生錯誤: {ex.Message}";
+    }
+    finally
+    {
+        loading = false;
+    }
+}
+
+private IEnumerable<DeterioratedCaseViewModel> FilteredCases =>
+cases.Where(c =>
+(string.IsNullOrEmpty(searchText) ||
+c.AccountNumber.Contains(searchText) ||
+c.CustomerName.Contains(searchText) ||
+c.VoucherNumbers.Contains(searchText)) &&
+(!filterSeverity.HasValue || c.HighestSeverity == filterSeverity));
+
+private void HandleSearch()
+{
+    // 觸發重新渲染
+    StateHasChanged();
+}
+
+private void FilterBySeverity(AlertSeverity? severity)
+{
+    filterSeverity = severity;
+    StateHasChanged();
+}
+
+private void ViewDetails(int accountId)
+{
+    Navigation.NavigateTo($"/case-details/{accountId}");
+}
+
+private string GetAlertColor(AlertSeverity severity) => severity switch
+{
+    AlertSeverity.Low => "success",
+    AlertSeverity.Medium => "warning",
+    AlertSeverity.High => "danger",
+    AlertSeverity.Critical => "dark",
+    _ => "secondary"
+};
+                            }

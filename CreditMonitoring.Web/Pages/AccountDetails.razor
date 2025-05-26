@@ -1,0 +1,138 @@
+@page "/account-details/{AccountId:int}"
+@attribute [Authorize]
+@using CreditMonitoring.Common.Models
+@using CreditMonitoring.Web.Services
+@inject ICreditMonitoringService CreditService
+@inject NavigationManager Navigation
+
+<h3>帳戶詳情</h3>
+
+@if (loading)
+{
+    <div class="d-flex justify-content-center">
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">載入中...</span>
+    </div>
+</div>
+}
+else if (error != null)
+{
+    <div class="alert alert-danger">
+    <h4>錯誤</h4>
+    <p>@error</p>
+</div>
+}
+else if (account != null)
+{
+    <div class="card mb-4">
+    <div class="card-header">
+        <h4>帳戶資訊</h4>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>帳戶號碼：</strong> @account.AccountNumber</p>
+                <p><strong>客戶名稱：</strong> @account.CustomerName</p>
+                <p><strong>貸款金額：</strong> @account.LoanAmount.ToString("C")</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>貸款日期：</strong> @account.LoanDate.ToShortDateString()</p>
+                <p><strong>當前信用分數：</strong> @account.CreditScore</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h4>信用警報歷史</h4>
+        <button class="btn btn-primary" @onclick="StartMonitoring">
+            開始監控
+        </button>
+    </div>
+    <div class="card-body">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>日期</th>
+                    <th>類型</th>
+                    <th>描述</th>
+                    <th>前次分數</th>
+                    <th>當前分數</th>
+                    <th>嚴重程度</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var alert in account.CreditAlerts.OrderByDescending(a => a.AlertDate))
+                    {
+                        <tr>
+                            <td>@alert.AlertDate.ToLocalTime()</td>
+                            <td>@alert.AlertType</td>
+                            <td>@alert.Description</td>
+                            <td>@alert.PreviousCreditScore</td>
+                            <td>@alert.CurrentCreditScore</td>
+                            <td>
+                                <span class="badge bg-@GetAlertColor(alert.Severity)">
+                                    @alert.Severity
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int AccountId { get; set; }
+
+    private LoanAccount? account;
+    private bool loading = true;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAccountData();
+    }
+
+    private async Task LoadAccountData()
+    {
+        try
+        {
+            loading = true;
+            account = await CreditService.GetAccountByIdAsync(AccountId);
+        }
+        catch (Exception ex)
+        {
+            error = $"獲取帳戶數據時發生錯誤: {ex.Message}";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task StartMonitoring()
+    {
+        try
+        {
+            await CreditService.StartMonitoringAsync(AccountId);
+            await LoadAccountData();
+        }
+        catch (Exception ex)
+        {
+            error = $"開始監控時發生錯誤: {ex.Message}";
+        }
+    }
+
+    private string GetAlertColor(AlertSeverity severity) => severity switch
+    {
+        AlertSeverity.Low => "success",
+        AlertSeverity.Medium => "warning",
+        AlertSeverity.High => "danger",
+        AlertSeverity.Critical => "dark",
+        _ => "secondary"
+    };
+}

@@ -1,0 +1,55 @@
+is_global = true
+build_property.TargetFramework = net8.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = CreditMonitoring.Web
+build_property.RootNamespace = CreditMonitoring.Web
+build_property.ProjectDir = /Users/apple/Work/BlazorServerApp/CreditMonitoring.Web/
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 8.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = /Users/apple/Work/BlazorServerApp/CreditMonitoring.Web
+build_property._RazorSourceGeneratorDebug = 
+
+[/Users/apple/Work/BlazorServerApp/CreditMonitoring.Web/Pages/AccountDetails.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQWNjb3VudERldGFpbHMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/apple/Work/BlazorServerApp/CreditMonitoring.Web/Pages/Authentication.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQXV0aGVudGljYXRpb24ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/apple/Work/BlazorServerApp/CreditMonitoring.Web/Pages/CaseDetails.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQ2FzZURldGFpbHMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/apple/Work/BlazorServerApp/CreditMonitoring.Web/Pages/CreditMonitoring.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQ3JlZGl0TW9uaXRvcmluZy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/apple/Work/BlazorServerApp/CreditMonitoring.Web/Pages/DeterioratedCases.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvRGV0ZXJpb3JhdGVkQ2FzZXMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/apple/Work/BlazorServerApp/CreditMonitoring.Web/Shared/LoginDisplay.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL0xvZ2luRGlzcGxheS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/apple/Work/BlazorServerApp/CreditMonitoring.Web/Shared/MainLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL01haW5MYXlvdXQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/apple/Work/BlazorServerApp/CreditMonitoring.Web/_Imports.razor]
+build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/apple/Work/BlazorServerApp/CreditMonitoring.Web/Pages/_Host.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvX0hvc3QuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 

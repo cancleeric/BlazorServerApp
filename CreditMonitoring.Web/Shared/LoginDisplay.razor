@@ -1,0 +1,64 @@
+@using System.Security.Claims
+@using CreditMonitoring.Web.Models
+@inject NavigationManager Navigation
+@inject IConfiguration Configuration
+
+<AuthorizeView>
+    <Authorized>
+        <div class="nav-item px-3 d-flex align-items-center">
+            <span class="nav-link me-2">
+                您好, @context.User.FindFirst(ClaimTypes.Name)?.Value!
+                <small class="text-muted">
+                    (@context.User.FindFirst("provider")?.Value)
+                </small>
+            </span>
+            <button class="nav-link btn btn-link" @onclick="BeginSignOut">
+                登出
+            </button>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="nav-item px-3">
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    登入
+                </button>
+                <ul class="dropdown-menu">
+                    @foreach (var provider in GetEnabledProviders())
+                    {
+                        <li>
+                            <button class="dropdown-item" @onclick="() => BeginSignIn(provider.Key)">
+                                <i class="fas fa-@provider.Value.Icon me-2"></i>
+                                使用 @provider.Value.DisplayName
+                            </button>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private Dictionary<string, AuthenticationProviderOptions> GetEnabledProviders()
+    {
+        var providers = Configuration
+        .GetSection("Authentication:Providers")
+        .Get<Dictionary<string, AuthenticationProviderOptions>>();
+
+        return providers?.Where(p => p.Value.Enabled)
+        .ToDictionary(p => p.Key, p => p.Value)
+        ?? new Dictionary<string, AuthenticationProviderOptions>();
+    }
+
+    private void BeginSignIn(string provider)
+    {
+        var returnUrl = Navigation.ToBaseRelativePath(Navigation.Uri);
+        Navigation.NavigateTo($"authentication/login?provider={provider}&returnUrl={returnUrl}", true);
+    }
+
+    private void BeginSignOut()
+    {
+        Navigation.NavigateTo("authentication/logout", true);
+    }
+}

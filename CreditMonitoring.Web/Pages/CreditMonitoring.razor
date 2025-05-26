@@ -1,0 +1,113 @@
+@attribute [Authorize]
+@page "/credit-monitoring"
+@using CreditMonitoring.Common.Models
+@using CreditMonitoring.Web.Services
+@inject ICreditMonitoringService CreditService
+@inject NavigationManager Navigation
+
+<h3>信用監控儀表板</h3>
+
+<div class="alert alert-info">
+    <h4>信用惡化監控</h4>
+    <p>此頁面顯示所有需要關注的貸款帳戶信用變化。</p>
+</div>
+
+@if (loading)
+{
+    <div class="d-flex justify-content-center">
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">載入中...</span>
+    </div>
+</div>
+}
+else if (error != null)
+{
+    <div class="alert alert-danger">
+    <h4>錯誤</h4>
+    <p>@error</p>
+</div>
+}
+else
+{
+    <div class="row">
+    <div class="col-md-12">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>帳戶號碼</th>
+                    <th>客戶名稱</th>
+                    <th>貸款金額</th>
+                    <th>當前信用分數</th>
+                    <th>警報等級</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var account in accounts)
+                    {
+                        <tr>
+                            <td>@account.AccountNumber</td>
+                            <td>@account.CustomerName</td>
+                            <td>@account.LoanAmount.ToString("C")</td>
+                            <td>@account.CreditScore</td>
+                            <td>
+                                @if (account.CreditAlerts.Any())
+                                {
+                                    <span class="badge bg-@GetAlertColor(account.CreditAlerts.Last().Severity)">
+                                        @account.CreditAlerts.Last().Severity
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">無警報</span>
+                                }
+                            </td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" @onclick="() => ViewDetails(account.Id)">
+                                    查看詳情
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@code {
+    private List<LoanAccount> accounts = new();
+    private bool loading = true;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            loading = true;
+            accounts = (await CreditService.GetAllAccountsAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            error = $"獲取數據時發生錯誤: {ex.Message}";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private string GetAlertColor(AlertSeverity severity) => severity switch
+    {
+        AlertSeverity.Low => "success",
+        AlertSeverity.Medium => "warning",
+        AlertSeverity.High => "danger",
+        AlertSeverity.Critical => "dark",
+        _ => "secondary"
+    };
+
+    private async Task ViewDetails(int accountId)
+    {
+        Navigation.NavigateTo($"/account-details/{accountId}");
+    }
+}

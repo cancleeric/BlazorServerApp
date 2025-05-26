@@ -1,0 +1,27 @@
+@page "/authentication/{action}"
+@using Microsoft.AspNetCore.Authentication
+@inject NavigationManager Navigation
+@inject IConfiguration Configuration
+
+@code {
+    [Parameter]
+    public string Action { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = new Uri(Navigation.Uri);
+        var queryParameters = System.Web.HttpUtility.ParseQueryString(uri.Query);
+
+        if (Action == "login")
+        {
+            var provider = queryParameters["provider"] ?? "Custom";
+            var returnUrl = queryParameters["returnUrl"] ?? "/";
+
+            Navigation.NavigateTo($"authentication/login-callback?provider={provider}&returnUrl={returnUrl}", true);
+        }
+        else if (Action == "logout")
+        {
+            Navigation.NavigateTo("authentication/logout-callback", true);
+        }
+    }
+}
