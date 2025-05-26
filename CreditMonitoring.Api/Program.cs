@@ -1,9 +1,13 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using CreditMonitoring.Api.Data;
 using CreditMonitoring.Api.Data.Interfaces;
 using CreditMonitoring.Api.Data.Repositories;
 using CreditMonitoring.Api.Services;
 using CreditMonitoring.Common.Models;
+using CreditMonitoring.Common.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +15,58 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// JWT Configuration
+var jwtKey = builder.Configuration["Jwt:SecretKey"] ?? "YourVerySecureSecretKeyThatIsAtLeast32CharactersLong123456789";
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "CreditMonitoring.Api";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "CreditMonitoring.Web";
+
+// 註冊JWT相關服務
+builder.Services.AddSingleton<JwtTokenService>();
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+
+// 配置JWT身份認證
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+        ValidateIssuer = true,
+        ValidIssuer = jwtIssuer,
+        ValidateAudience = true,
+        ValidAudience = jwtAudience,
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+// 配置授權
+builder.Services.AddAuthorization(options =>
+{
+    // 定義角色基礎的授權策略
+    options.AddPolicy("RequireAdmin", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("RequireCreditOfficer", policy => policy.RequireRole("CreditOfficer", "Manager", "Admin"));
+    options.AddPolicy("RequireManager", policy => policy.RequireRole("Manager", "Admin"));
+    options.AddPolicy("RequireAuditor", policy => policy.RequireRole("Auditor", "Admin"));
+});
+
+// 配置CORS以支援Web應用程式
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowWebApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:5003", "https://localhost:5003")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
 builder.Services.AddDbContext<CreditMonitoringDbContext>(options =>
     options.UseInMemoryDatabase("CreditMonitoringDb"));
@@ -29,6 +85,11 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// 使用CORS
+app.UseCors("AllowWebApp");
+
+// 使用身份認證和授權中間件
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

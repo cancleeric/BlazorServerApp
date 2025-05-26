@@ -28,6 +28,29 @@
                         <i class="fas fa-user"></i> 帳戶詳情
                     </NavLink>
                 </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-shield-alt"></i> 身份認證
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <NavLink class="dropdown-item" href="/jwt-login">
+                                <i class="fas fa-key me-2"></i> JWT 登入
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink class="dropdown-item" href="/login">
+                                <i class="fas fa-sign-in-alt me-2"></i> 傳統登入
+                            </NavLink>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="#" @onclick="ShowAuthInfo">
+                                <i class="fas fa-info-circle me-2"></i> 認證說明
+                            </a>
+                        </li>
+                    </ul>
+                </li>
             </ul>
             
             <ul class="navbar-nav">
@@ -47,5 +70,11 @@
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+
+    private async Task ShowAuthInfo()
+    {
+        // 這裡可以顯示認證方式的說明對話框
+        // 或者導航到認證說明頁面
     }
 }

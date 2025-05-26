@@ -1,0 +1,209 @@
+{
+    "info": {
+        "name": "Simple JWT API",
+        "description": "最簡單的 JWT Web API 測試集合",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "https://localhost:7001",
+            "type": "string"
+        },
+        {
+            "key": "jwt_token",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "1. 測試公開端點",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/api/auth/public",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "auth",
+                        "public"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "2. 管理員登入",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "if (pm.response.code === 200) {",
+                            "    var jsonData = pm.response.json();",
+                            "    if (jsonData.success && jsonData.token) {",
+                            "        pm.collectionVariables.set('jwt_token', jsonData.token);",
+                            "        console.log('JWT Token saved:', jsonData.token);",
+                            "    }",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"123456\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "3. 一般用戶登入",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"username\": \"user\",\n  \"password\": \"123456\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "4. 獲取當前用戶信息",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}",
+                        "type": "text"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/api/auth/me",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "auth",
+                        "me"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "5. 管理員專用端點",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}",
+                        "type": "text"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/api/auth/admin-only",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "auth",
+                        "admin-only"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "6. 測試無效令牌",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer invalid_token",
+                        "type": "text"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/api/auth/me",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "auth",
+                        "me"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "7. 測試缺少令牌",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/api/auth/me",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "auth",
+                        "me"
+                    ]
+                }
+            },
+            "response": []
+        }
+    ]
+}

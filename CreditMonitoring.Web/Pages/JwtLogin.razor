@@ -1,0 +1,319 @@
+@page "/jwt-login"
+@using CreditMonitoring.Web.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.ComponentModel.DataAnnotations
+@inject JwtAuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>JWT 身份認證登入</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        JWT 身份認證
+                    </h4>
+                    <small class="d-block mt-1">信貸監控系統</small>
+                </div>
+                <div class="card-body p-4">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            @errorMessage
+                            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            @successMessage
+                            <button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
+                        </div>
+                    }
+
+                    <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+                        <DataAnnotationsValidator />
+                        
+                        <!-- 用戶名 -->
+                        <div class="mb-3">
+                            <label for="username" class="form-label">
+                                <i class="fas fa-user me-1"></i>
+                                用戶名
+                            </label>
+                            <InputText id="username" 
+                                      class="form-control" 
+                                      @bind-Value="loginModel.Username" 
+                                      placeholder="請輸入用戶名"
+                                      disabled="@isLoading" />
+                            <ValidationMessage For="@(() => loginModel.Username)" class="text-danger small" />
+                        </div>
+
+                        <!-- 密碼 -->
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock me-1"></i>
+                                密碼
+                            </label>
+                            <div class="input-group">
+                                <InputText id="password" 
+                                          type="@(showPassword ? "text" : "password")"
+                                          class="form-control" 
+                                          @bind-Value="loginModel.Password" 
+                                          placeholder="請輸入密碼"
+                                          disabled="@isLoading" />
+                                <button type="button" 
+                                        class="btn btn-outline-secondary" 
+                                        @onclick="TogglePasswordVisibility"
+                                        disabled="@isLoading">
+                                    <i class="fas @(showPassword ? "fa-eye-slash" : "fa-eye")"></i>
+                                </button>
+                            </div>
+                            <ValidationMessage For="@(() => loginModel.Password)" class="text-danger small" />
+                        </div>
+
+                        <!-- 銀行代碼 -->
+                        <div class="mb-3">
+                            <label for="bankCode" class="form-label">
+                                <i class="fas fa-building me-1"></i>
+                                銀行代碼
+                            </label>
+                            <InputSelect id="bankCode" 
+                                        class="form-control" 
+                                        @bind-Value="loginModel.BankCode"
+                                        disabled="@isLoading">
+                                <option value="">請選擇銀行</option>
+                                <option value="001">第一銀行 (001)</option>
+                                <option value="002">臺灣銀行 (002)</option>
+                                <option value="003">土地銀行 (003)</option>
+                                <option value="004">合作金庫 (004)</option>
+                            </InputSelect>
+                        </div>
+
+                        <!-- 分行代碼 -->
+                        <div class="mb-3">
+                            <label for="branchCode" class="form-label">
+                                <i class="fas fa-map-marker-alt me-1"></i>
+                                分行代碼
+                            </label>
+                            <InputSelect id="branchCode" 
+                                        class="form-control" 
+                                        @bind-Value="loginModel.BranchCode"
+                                        disabled="@isLoading">
+                                <option value="">請選擇分行</option>
+                                <option value="0001">總行 (0001)</option>
+                                <option value="0002">台北分行 (0002)</option>
+                                <option value="0003">新竹分行 (0003)</option>
+                                <option value="0004">台中分行 (0004)</option>
+                                <option value="0005">高雄分行 (0005)</option>
+                            </InputSelect>
+                        </div>
+
+                        <!-- 登入按鈕 -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" 
+                                    class="btn btn-primary btn-lg" 
+                                    disabled="@isLoading">
+                                @if (isLoading)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    <span>登入中...</span>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sign-in-alt me-2"></i>
+                                    <span>登入</span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
+
+                    <!-- 測試帳戶說明 -->
+                    <div class="mt-4">
+                        <div class="card bg-light">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    測試帳戶
+                                </h6>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="row g-2 small">
+                                    <div class="col-12">
+                                        <strong>管理員：</strong>
+                                        <code class="ms-1">admin / admin123</code>
+                                    </div>
+                                    <div class="col-12">
+                                        <strong>信貸專員：</strong>
+                                        <code class="ms-1">officer1 / pass123</code>
+                                    </div>
+                                    <div class="col-12">
+                                        <strong>分行經理：</strong>
+                                        <code class="ms-1">manager1 / mgr123</code>
+                                    </div>
+                                    <div class="col-12">
+                                        <strong>稽核人員：</strong>
+                                        <code class="ms-1">auditor1 / aud123</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- JWT技術說明 -->
+                    <div class="mt-3">
+                        <button class="btn btn-link btn-sm p-0" 
+                                type="button" 
+                                @onclick="ToggleJwtInfo">
+                            <i class="fas fa-question-circle me-1"></i>
+                            什麼是JWT認證？
+                        </button>
+                        
+                        @if (showJwtInfo)
+                        {
+                            <div class="mt-2 p-3 bg-light rounded border">
+                                <h6 class="text-primary">
+                                    <i class="fas fa-lock me-1"></i>
+                                    JWT (JSON Web Token) 認證
+                                </h6>
+                                <ul class="small mb-0">
+                                    <li><strong>無狀態認證：</strong>伺服器不需保存會話信息</li>
+                                    <li><strong>安全性：</strong>使用數位簽名防止令牌被篡改</li>
+                                    <li><strong>跨平台：</strong>支援多種程式語言和框架</li>
+                                    <li><strong>可擴展：</strong>適合分散式系統和微服務架構</li>
+                                    <li><strong>自包含：</strong>令牌包含用戶信息，減少資料庫查詢</li>
+                                </ul>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border: none;
+        border-radius: 15px;
+    }
+    
+    .card-header {
+        border-radius: 15px 15px 0 0 !important;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .btn {
+        border-radius: 10px;
+        font-weight: 500;
+    }
+    
+    .alert {
+        border-radius: 10px;
+        border: none;
+    }
+    
+    code {
+        background-color: #f8f9fa;
+        color: #e83e8c;
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-size: 0.9em;
+    }
+</style>
+
+@code {
+    private LoginModel loginModel = new();
+    private bool isLoading = false;
+    private bool showPassword = false;
+    private bool showJwtInfo = false;
+    private string? errorMessage;
+    private string? successMessage;
+
+    public class LoginModel
+    {
+        [Required(ErrorMessage = "請輸入用戶名")]
+        public string Username { get; set; } = "";
+
+        [Required(ErrorMessage = "請輸入密碼")]
+        public string Password { get; set; } = "";
+
+        public string? BankCode { get; set; }
+        public string? BranchCode { get; set; }
+    }
+
+    private void TogglePasswordVisibility()
+    {
+        showPassword = !showPassword;
+    }
+
+    private void ToggleJwtInfo()
+    {
+        showJwtInfo = !showJwtInfo;
+    }
+
+    private async Task HandleLogin()
+    {
+        if (isLoading) return;
+
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+            successMessage = null;
+
+            var (success, error) = await AuthStateProvider.LoginAsync(
+                loginModel.Username,
+                loginModel.Password,
+                loginModel.BankCode,
+                loginModel.BranchCode);
+
+            if (success)
+            {
+                successMessage = "登入成功！正在跳轉...";
+                await Task.Delay(1000); // 顯示成功訊息
+                Navigation.NavigateTo("/", true);
+            }
+            else
+            {
+                errorMessage = error ?? "登入失敗，請檢查您的憑證";
+                await JSRuntime.InvokeVoidAsync("console.log", $"Login failed: {errorMessage}");
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "系統錯誤，請稍後再試";
+            await JSRuntime.InvokeVoidAsync("console.error", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 檢查是否已經登入
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            Navigation.NavigateTo("/");
+        }
+    }
+}
