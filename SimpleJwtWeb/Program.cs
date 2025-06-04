@@ -1,4 +1,3 @@
-using SimpleJwtWeb.Client.Pages;
 using SimpleJwtWeb.Components;
 using SimpleJwtWeb.Services;
 
@@ -34,7 +33,6 @@ app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
-    .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(SimpleJwtWeb.Client._Imports).Assembly);
+    .AddInteractiveWebAssemblyRenderMode();
 
 app.Run();

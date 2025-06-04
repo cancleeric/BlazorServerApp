@@ -76,13 +76,11 @@ public class ApiService : IApiService
             _logger.LogError(ex, "登入 API 調用失敗");
             return new LoginResponse { Success = false, Message = $"系統錯誤: {ex.Message}" };
         }
-    }
-
-    public async Task<string> GetProtectedDataAsync()
+    }    public async Task<string> GetProtectedDataAsync()
     {
         try
         {
-            var response = await _httpClient.GetAsync("/api/auth/protected");
+            var response = await _httpClient.GetAsync("/api/auth/me");
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsStringAsync();
         }
@@ -98,10 +96,9 @@ public class ApiService : IApiService
     }
 
     public async Task<string> GetAdminDataAsync()
-    {
-        try
+    {        try
         {
-            var response = await _httpClient.GetAsync("/api/auth/admin");
+            var response = await _httpClient.GetAsync("/api/auth/admin-only");
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsStringAsync();
         }
@@ -118,13 +115,11 @@ public class ApiService : IApiService
             _logger.LogError(ex, "調用管理員 API 失敗");
             return $"錯誤: {ex.Message}";
         }
-    }
-
-    public async Task<string> GetUserDataAsync()
+    }    public async Task<string> GetUserDataAsync()
     {
         try
         {
-            var response = await _httpClient.GetAsync("/api/auth/user");
+            var response = await _httpClient.GetAsync("/api/auth/me");
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsStringAsync();
         }

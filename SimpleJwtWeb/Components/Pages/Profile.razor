@@ -1,0 +1,298 @@
+@page "/profile"
+@using SimpleJwtWeb.Services
+@using SimpleJwtWeb.Models
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>個人資料 - SimpleJwtWeb</PageTitle>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            @if (isAuthenticated && currentUser != null)
+            {
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-user me-2"></i>
+                            個人資料
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 text-center mb-4">
+                                <div class="profile-avatar">
+                                    <i class="fas fa-user-circle fa-8x text-primary"></i>
+                                </div>
+                                <h5 class="mt-3">@currentUser.Username</h5>
+                                <span class="badge bg-@GetRoleColor(currentUser.Role) fs-6">@currentUser.Role</span>
+                            </div>
+                            <div class="col-md-8">
+                                <h5>帳戶資訊</h5>
+                                <hr>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-sm-4">
+                                        <strong><i class="fas fa-id-card me-2"></i>用戶 ID：</strong>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        @currentUser.Id
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-sm-4">
+                                        <strong><i class="fas fa-user me-2"></i>用戶名：</strong>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        @currentUser.Username
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-sm-4">
+                                        <strong><i class="fas fa-envelope me-2"></i>郵箱：</strong>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        @currentUser.Email
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-sm-4">
+                                        <strong><i class="fas fa-user-tag me-2"></i>角色：</strong>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        <span class="badge bg-@GetRoleColor(currentUser.Role)">@currentUser.Role</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-sm-4">
+                                        <strong><i class="fas fa-clock me-2"></i>登入時間：</strong>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        @DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <h5>權限說明</h5>
+                        <div class="row">
+                            <div class="col-12">
+                                @if (currentUser.Role == "Admin")
+                                {
+                                    <div class="alert alert-info">
+                                        <h6><i class="fas fa-crown me-2"></i>管理員權限</h6>
+                                        <ul class="mb-0">
+                                            <li>可以訪問所有 API 端點</li>
+                                            <li>可以查看管理面板</li>
+                                            <li>擁有系統的完整控制權</li>
+                                        </ul>
+                                    </div>
+                                }
+                                else if (currentUser.Role == "User")
+                                {
+                                    <div class="alert alert-success">
+                                        <h6><i class="fas fa-user me-2"></i>用戶權限</h6>
+                                        <ul class="mb-0">
+                                            <li>可以訪問用戶 API 端點</li>
+                                            <li>可以查看個人資料</li>
+                                            <li>可以訪問基本功能</li>
+                                        </ul>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-warning">
+                                        <h6><i class="fas fa-question-circle me-2"></i>未知角色</h6>
+                                        <p class="mb-0">當前角色權限未定義，請聯繫管理員。</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button class="btn btn-outline-secondary me-md-2" @onclick="RefreshProfile">
+                                <i class="fas fa-sync me-1"></i>
+                                重新整理
+                            </button>
+                            <button class="btn btn-danger" @onclick="HandleLogout">
+                                <i class="fas fa-sign-out-alt me-1"></i>
+                                登出
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- JWT 令牌資訊卡片 -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-key me-2"></i>
+                            JWT 令牌資訊
+                            <button class="btn btn-sm btn-outline-secondary float-end" @onclick="ToggleTokenInfo">
+                                @(showTokenInfo ? "隱藏" : "顯示")
+                            </button>
+                        </h5>
+                    </div>
+                    @if (showTokenInfo)
+                    {
+                        <div class="card-body">
+                            @if (!string.IsNullOrEmpty(currentToken))
+                            {
+                                <div class="mb-3">
+                                    <h6>令牌字串：</h6>
+                                    <div class="bg-light p-2 rounded small text-break">
+                                        @currentToken
+                                    </div>
+                                </div>
+                                
+                                @if (!string.IsNullOrEmpty(tokenDecoded))
+                                {
+                                    <div>
+                                        <h6>解析結果：</h6>
+                                        <div class="bg-light p-2 rounded">
+                                            <pre class="mb-0 small">@tokenDecoded</pre>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <p class="text-muted">無法獲取令牌資訊</p>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning text-center">
+                    <h5>
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        需要登入
+                    </h5>
+                    <p>請先登入以查看個人資料。</p>
+                    <a href="/login" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt me-1"></i>
+                        前往登入
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool isAuthenticated = false;
+    private UserInfo? currentUser;
+    private bool showTokenInfo = false;
+    private string? currentToken;
+    private string? tokenDecoded;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckAuthStatus();
+        
+        // 訂閱認證狀態變更
+        AuthService.AuthStateChanged += OnAuthStateChanged;
+    }
+
+    private async void OnAuthStateChanged(bool authenticated)
+    {
+        await CheckAuthStatus();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task CheckAuthStatus()
+    {
+        isAuthenticated = await AuthService.IsAuthenticatedAsync();
+        if (isAuthenticated)
+        {
+            currentUser = await AuthService.GetCurrentUserAsync();
+            currentToken = await AuthService.GetTokenAsync();
+            
+            if (!string.IsNullOrEmpty(currentToken))
+            {
+                DecodeToken();
+            }
+        }
+        else
+        {
+            currentUser = null;
+            currentToken = null;
+            tokenDecoded = null;
+            Navigation.NavigateTo("/login");
+        }
+    }
+
+    private void DecodeToken()
+    {
+        if (string.IsNullOrEmpty(currentToken)) return;
+        
+        try
+        {
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var token = handler.ReadJwtToken(currentToken);
+            
+            var decoded = new System.Text.StringBuilder();
+            decoded.AppendLine($"發行者 (Issuer): {token.Issuer}");
+            decoded.AppendLine($"受眾 (Audience): {string.Join(", ", token.Audiences)}");
+            decoded.AppendLine($"發行時間: {token.ValidFrom:yyyy-MM-dd HH:mm:ss} UTC");
+            decoded.AppendLine($"過期時間: {token.ValidTo:yyyy-MM-dd HH:mm:ss} UTC");
+            decoded.AppendLine($"主體 (Subject): {token.Subject}");
+            decoded.AppendLine();
+            decoded.AppendLine("聲明 (Claims):");
+            
+            foreach (var claim in token.Claims)
+            {
+                decoded.AppendLine($"  {claim.Type}: {claim.Value}");
+            }
+            
+            tokenDecoded = decoded.ToString();
+        }
+        catch (Exception ex)
+        {
+            tokenDecoded = $"解析令牌時發生錯誤: {ex.Message}";
+        }
+    }
+
+    private string GetRoleColor(string role)
+    {
+        return role?.ToLower() switch
+        {
+            "admin" => "danger",
+            "user" => "primary",
+            _ => "secondary"
+        };
+    }
+
+    private async Task RefreshProfile()
+    {
+        await CheckAuthStatus();
+        StateHasChanged();
+    }
+
+    private void ToggleTokenInfo()
+    {
+        showTokenInfo = !showTokenInfo;
+    }
+
+    private async Task HandleLogout()
+    {
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/", true);
+    }
+
+    public void Dispose()
+    {
+        AuthService.AuthStateChanged -= OnAuthStateChanged;
+    }
+}

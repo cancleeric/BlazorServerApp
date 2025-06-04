@@ -1,0 +1,223 @@
+@page "/login"
+@using SimpleJwtWeb.Models
+@using SimpleJwtWeb.Services
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<PageTitle>登入 - SimpleJwtWeb</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        用戶登入
+                    </h4>
+                    <small class="d-block mt-1">SimpleJwtWeb 範例</small>
+                </div>
+                <div class="card-body p-4">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            @errorMessage
+                            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            @successMessage
+                            <button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
+                        </div>
+                    }
+
+                    <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+                        <DataAnnotationsValidator />
+                        
+                        <!-- 用戶名 -->
+                        <div class="mb-3">
+                            <label for="username" class="form-label">
+                                <i class="fas fa-user me-1"></i>
+                                用戶名
+                            </label>
+                            <InputText id="username" 
+                                      class="form-control" 
+                                      @bind-Value="loginModel.Username" 
+                                      placeholder="請輸入用戶名"
+                                      disabled="@isLoading" />
+                            <ValidationMessage For="@(() => loginModel.Username)" class="text-danger small" />
+                        </div>
+
+                        <!-- 密碼 -->
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock me-1"></i>
+                                密碼
+                            </label>
+                            <div class="input-group">
+                                <InputText id="password" 
+                                          type="@(showPassword ? "text" : "password")"
+                                          class="form-control" 
+                                          @bind-Value="loginModel.Password" 
+                                          placeholder="請輸入密碼"
+                                          disabled="@isLoading" />
+                                <button type="button" 
+                                        class="btn btn-outline-secondary" 
+                                        @onclick="TogglePasswordVisibility"
+                                        disabled="@isLoading">
+                                    <i class="fas @(showPassword ? "fa-eye-slash" : "fa-eye")"></i>
+                                </button>
+                            </div>
+                            <ValidationMessage For="@(() => loginModel.Password)" class="text-danger small" />
+                        </div>
+
+                        <!-- 登入按鈕 -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" 
+                                    class="btn btn-primary btn-lg" 
+                                    disabled="@isLoading">
+                                @if (isLoading)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    <span>登入中...</span>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sign-in-alt me-2"></i>
+                                    <span>登入</span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
+
+                    <!-- 測試帳戶說明 -->
+                    <div class="mt-4">
+                        <div class="card bg-light">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    測試帳戶
+                                </h6>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="row g-2 small">
+                                    <div class="col-12">
+                                        <strong>管理員：</strong>
+                                        <code class="ms-1">admin / 123456</code>
+                                    </div>
+                                    <div class="col-12">
+                                        <strong>普通用戶：</strong>
+                                        <code class="ms-1">user / 123456</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border: none;
+        border-radius: 15px;
+    }
+    
+    .card-header {
+        border-radius: 15px 15px 0 0 !important;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .btn {
+        border-radius: 10px;
+        font-weight: 500;
+    }
+    
+    .alert {
+        border-radius: 10px;
+        border: none;
+    }
+    
+    code {
+        background-color: #f8f9fa;
+        color: #e83e8c;
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-size: 0.9em;
+    }
+</style>
+
+@code {
+    private LoginRequest loginModel = new();
+    private bool isLoading = false;
+    private bool showPassword = false;
+    private string? errorMessage;
+    private string? successMessage;
+
+    private void TogglePasswordVisibility()
+    {
+        showPassword = !showPassword;
+    }
+
+    private async Task HandleLogin()
+    {
+        if (isLoading) return;
+
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+            successMessage = null;
+
+            var success = await AuthService.LoginAsync(loginModel);
+
+            if (success)
+            {
+                successMessage = "登入成功！正在跳轉...";
+                await Task.Delay(1000); // 顯示成功訊息
+                Navigation.NavigateTo("/", true);
+            }
+            else
+            {
+                errorMessage = "登入失敗，請檢查您的用戶名和密碼";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "系統錯誤，請稍後再試";
+            await JSRuntime.InvokeVoidAsync("console.error", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 檢查是否已經登入
+        if (await AuthService.IsAuthenticatedAsync())
+        {
+            Navigation.NavigateTo("/");
+        }
+    }
+}

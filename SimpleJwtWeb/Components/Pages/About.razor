@@ -1,0 +1,210 @@
+@page "/about"
+
+<PageTitle>關於 - SimpleJwtWeb</PageTitle>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="jumbotron bg-gradient text-white text-center p-5 rounded mb-4" 
+                 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h1 class="display-4">
+                    <i class="fas fa-shield-alt me-3"></i>
+                    SimpleJwtWeb
+                </h1>
+                <p class="lead">Blazor Web App + JWT 認證的完整範例</p>
+                <hr class="my-4 bg-white">
+                <p>這是一個展示如何在 Blazor 應用程式中實現 JWT 認證的學習專案</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        項目簡介
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <p>
+                        <strong>SimpleJwtWeb</strong> 是一個使用 Blazor Web App 技術構建的前端應用程式，
+                        專門用於演示如何與 JWT 保護的 Web API 進行交互。
+                    </p>
+                    
+                    <h5>主要功能：</h5>
+                    <ul>
+                        <li><strong>用戶認證：</strong>完整的登入/登出功能</li>
+                        <li><strong>JWT 管理：</strong>自動處理令牌存儲和更新</li>
+                        <li><strong>API 調用：</strong>演示不同權限級別的 API 訪問</li>
+                        <li><strong>角色管理：</strong>支援管理員和普通用戶角色</li>
+                        <li><strong>響應式設計：</strong>適配各種螢幕尺寸</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>
+                        技術架構
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>前端技術：</h5>
+                            <ul>
+                                <li>Blazor Web App (.NET 8)</li>
+                                <li>Bootstrap 5.3</li>
+                                <li>Font Awesome 圖標</li>
+                                <li>Interactive Server Components</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>後端 API：</h5>
+                            <ul>
+                                <li>ASP.NET Core Web API</li>
+                                <li>JWT Bearer 認證</li>
+                                <li>角色基礎授權</li>
+                                <li>Swagger/OpenAPI 文檔</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>
+                        測試帳戶
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>管理員帳戶：</h6>
+                        <p class="mb-1"><strong>用戶名：</strong> <code>admin</code></p>
+                        <p class="mb-1"><strong>密碼：</strong> <code>123456</code></p>
+                        <p><small class="text-muted">擁有所有 API 訪問權限</small></p>
+                    </div>
+                    
+                    <div>
+                        <h6>普通用戶：</h6>
+                        <p class="mb-1"><strong>用戶名：</strong> <code>user</code></p>
+                        <p class="mb-1"><strong>密碼：</strong> <code>123456</code></p>
+                        <p><small class="text-muted">有限的 API 訪問權限</small></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-book me-2"></i>
+                        學習重點
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-2"></i>JWT 認證流程</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Token 生命週期管理</li>
+                        <li><i class="fas fa-check text-success me-2"></i>API 權限控制</li>
+                        <li><i class="fas fa-check text-success me-2"></i>前後端分離架構</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Blazor 狀態管理</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-link me-2"></i>
+                        相關連結
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="/api-demo" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-code me-1"></i>
+                            API 演示
+                        </a>
+                        <a href="/login" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-sign-in-alt me-1"></i>
+                            用戶登入
+                        </a>
+                        <a href="https://localhost:7001/swagger" target="_blank" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-external-link-alt me-1"></i>
+                            API 文檔
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-rocket me-2"></i>
+                        快速開始
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>1. 啟動後端 API</h5>
+                            <div class="bg-dark text-light p-3 rounded mb-3">
+                                <code>cd SimpleJwtApi</code><br>
+                                <code>dotnet run</code>
+                            </div>
+                            <p><small class="text-muted">API 將在 https://localhost:7001 運行</small></p>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5>2. 啟動前端應用</h5>
+                            <div class="bg-dark text-light p-3 rounded mb-3">
+                                <code>cd SimpleJwtWeb</code><br>
+                                <code>dotnet run</code>
+                            </div>
+                            <p><small class="text-muted">Web 應用將在 https://localhost:5001 運行</small></p>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <h6><i class="fas fa-lightbulb me-2"></i>提示</h6>
+                        <p class="mb-0">
+                            請確保兩個專案都在運行，並且 API 的 URL 在 appsettings.json 中正確配置。
+                            您可以通過 API 演示頁面測試不同的端點。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .jumbotron {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    code {
+        background-color: #f8f9fa;
+        color: #e83e8c;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.9em;
+    }
+    
+    .bg-dark code {
+        background-color: transparent;
+        color: #28a745;
+        padding: 0;
+    }
+</style>
