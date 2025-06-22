@@ -1,0 +1,15 @@
+@page "/protected"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@using System.Security.Claims
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>Protected</PageTitle>
+
+<h3>受保護頁面</h3>
+<p>只有登入的使用者可以看到這一頁。</p>
+<p>目前登入帳號：@UserName</p>
+
+@code {
+    private string? UserName => HttpContextAccessor.HttpContext?.User?.Identity?.Name;
+}

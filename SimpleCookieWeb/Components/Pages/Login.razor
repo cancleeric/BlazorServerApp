@@ -1,0 +1,56 @@
+@page "/login"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.AspNetCore.Authorization
+@attribute [AllowAnonymous]
+@inject NavigationManager Navigation
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>Login</PageTitle>
+
+<h3>登入</h3>
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<EditForm Model="loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm">
+    <InputText @bind-Value="loginModel.Username" placeholder="帳號" class="form-control mb-2" />
+    <InputText @bind-Value="loginModel.Password" placeholder="密碼" type="password" class="form-control mb-2" />
+    <button class="btn btn-primary" type="submit">登入</button>
+    <div class="form-text">預設帳號：user，密碼：1234</div>
+</EditForm>
+
+@code {
+    private LoginModel loginModel = new() { Username = "user", Password = "1234" };
+    private string? errorMessage;
+
+    private async Task HandleLogin()
+    {
+        // 範例帳密: user / 1234
+        if (loginModel.Username == "user" && loginModel.Password == "1234")
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, loginModel.Username),
+                new Claim(ClaimTypes.Role, "User")
+            };
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+            await HttpContextAccessor.HttpContext!.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+            Navigation.NavigateTo("/");
+        }
+        else
+        {
+            errorMessage = "帳號或密碼錯誤";
+        }
+    }
+
+    public class LoginModel
+    {
+        public string? Username { get; set; }
+        public string? Password { get; set; }
+    }
+}
+
