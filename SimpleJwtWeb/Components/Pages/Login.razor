@@ -1,11 +1,12 @@
-@page "/jwt-login"
-@using Microsoft.AspNetCore.Components.Authorization
-@using System.ComponentModel.DataAnnotations
-@inject JwtAuthenticationStateProvider AuthStateProvider
+@page "/login"
+@using SimpleJwtWeb.Models
+@using SimpleJwtWeb.Services
+@inject IAuthService AuthService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
 
-<PageTitle>JWT 身份認證登入</PageTitle>
+<PageTitle>登入 - SimpleJwtWeb</PageTitle>
 
 <div class="container mt-5">
     <div class="row justify-content-center">
@@ -13,10 +14,10 @@
             <div class="card shadow">
                 <div class="card-header bg-primary text-white text-center">
                     <h4 class="mb-0">
-                        <i class="fas fa-shield-alt me-2"></i>
-                        JWT 身份認證
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        用戶登入
                     </h4>
-                    <small class="d-block mt-1">信貸監控系統</small>
+                    <small class="d-block mt-1">SimpleJwtWeb 範例</small>
                 </div>
                 <div class="card-body p-4">
                     @if (!string.IsNullOrEmpty(errorMessage))
@@ -77,43 +78,6 @@
                             <ValidationMessage For="@(() => loginModel.Password)" class="text-danger small" />
                         </div>
 
-                        <!-- 銀行代碼 -->
-                        <div class="mb-3">
-                            <label for="bankCode" class="form-label">
-                                <i class="fas fa-building me-1"></i>
-                                銀行代碼
-                            </label>
-                            <InputSelect id="bankCode" 
-                                        class="form-control" 
-                                        @bind-Value="loginModel.BankCode"
-                                        disabled="@isLoading">
-                                <option value="">請選擇銀行</option>
-                                <option value="001">第一銀行 (001)</option>
-                                <option value="002">臺灣銀行 (002)</option>
-                                <option value="003">土地銀行 (003)</option>
-                                <option value="004">合作金庫 (004)</option>
-                            </InputSelect>
-                        </div>
-
-                        <!-- 分行代碼 -->
-                        <div class="mb-3">
-                            <label for="branchCode" class="form-label">
-                                <i class="fas fa-map-marker-alt me-1"></i>
-                                分行代碼
-                            </label>
-                            <InputSelect id="branchCode" 
-                                        class="form-control" 
-                                        @bind-Value="loginModel.BranchCode"
-                                        disabled="@isLoading">
-                                <option value="">請選擇分行</option>
-                                <option value="0001">總行 (0001)</option>
-                                <option value="0002">台北分行 (0002)</option>
-                                <option value="0003">新竹分行 (0003)</option>
-                                <option value="0004">台中分行 (0004)</option>
-                                <option value="0005">高雄分行 (0005)</option>
-                            </InputSelect>
-                        </div>
-
                         <!-- 登入按鈕 -->
                         <div class="d-grid gap-2">
                             <button type="submit" 
@@ -146,50 +110,15 @@
                                 <div class="row g-2 small">
                                     <div class="col-12">
                                         <strong>管理員：</strong>
-                                        <code class="ms-1">admin / admin123</code>
+                                        <code class="ms-1">admin / 123456</code>
                                     </div>
                                     <div class="col-12">
-                                        <strong>信貸專員：</strong>
-                                        <code class="ms-1">officer1 / pass123</code>
-                                    </div>
-                                    <div class="col-12">
-                                        <strong>分行經理：</strong>
-                                        <code class="ms-1">manager1 / mgr123</code>
-                                    </div>
-                                    <div class="col-12">
-                                        <strong>稽核人員：</strong>
-                                        <code class="ms-1">auditor1 / aud123</code>
+                                        <strong>普通用戶：</strong>
+                                        <code class="ms-1">user / 123456</code>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- JWT技術說明 -->
-                    <div class="mt-3">
-                        <button class="btn btn-link btn-sm p-0" 
-                                type="button" 
-                                @onclick="ToggleJwtInfo">
-                            <i class="fas fa-question-circle me-1"></i>
-                            什麼是JWT認證？
-                        </button>
-                        
-                        @if (showJwtInfo)
-                        {
-                            <div class="mt-2 p-3 bg-light rounded border">
-                                <h6 class="text-primary">
-                                    <i class="fas fa-lock me-1"></i>
-                                    JWT (JSON Web Token) 認證
-                                </h6>
-                                <ul class="small mb-0">
-                                    <li><strong>無狀態認證：</strong>伺服器不需保存會話信息</li>
-                                    <li><strong>安全性：</strong>使用數位簽名防止令牌被篡改</li>
-                                    <li><strong>跨平台：</strong>支援多種程式語言和框架</li>
-                                    <li><strong>可擴展：</strong>適合分散式系統和微服務架構</li>
-                                    <li><strong>自包含：</strong>令牌包含用戶信息，減少資料庫查詢</li>
-                                </ul>
-                            </div>
-                        }
                     </div>
                 </div>
             </div>
@@ -238,33 +167,15 @@
 </style>
 
 @code {
-    private LoginModel loginModel = new();
+    private LoginRequest loginModel = new();
     private bool isLoading = false;
     private bool showPassword = false;
-    private bool showJwtInfo = false;
     private string? errorMessage;
     private string? successMessage;
-
-    public class LoginModel
-    {
-        [Required(ErrorMessage = "請輸入用戶名")]
-        public string Username { get; set; } = "";
-
-        [Required(ErrorMessage = "請輸入密碼")]
-        public string Password { get; set; } = "";
-
-        public string? BankCode { get; set; }
-        public string? BranchCode { get; set; }
-    }
 
     private void TogglePasswordVisibility()
     {
         showPassword = !showPassword;
-    }
-
-    private void ToggleJwtInfo()
-    {
-        showJwtInfo = !showJwtInfo;
     }
 
     private async Task HandleLogin()
@@ -277,11 +188,7 @@
             errorMessage = null;
             successMessage = null;
 
-            var (success, error) = await AuthStateProvider.LoginAsync(
-                loginModel.Username,
-                loginModel.Password,
-                loginModel.BankCode,
-                loginModel.BranchCode);
+            var success = await AuthService.LoginAsync(loginModel);
 
             if (success)
             {
@@ -291,8 +198,7 @@
             }
             else
             {
-                errorMessage = error ?? "登入失敗，請檢查您的憑證";
-                await JSRuntime.InvokeVoidAsync("console.log", $"Login failed: {errorMessage}");
+                errorMessage = "登入失敗，請檢查您的用戶名和密碼";
             }
         }
         catch (Exception ex)
@@ -309,8 +215,7 @@
     protected override async Task OnInitializedAsync()
     {
         // 檢查是否已經登入
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        if (authState.User.Identity?.IsAuthenticated == true)
+        if (await AuthService.IsAuthenticatedAsync())
         {
             Navigation.NavigateTo("/");
         }

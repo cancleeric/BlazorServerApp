@@ -1,0 +1,45 @@
+{
+    "version": "2.0",
+    "logging": {
+        "applicationInsights": {
+            "samplingSettings": {
+                "isEnabled": true,
+                "excludedTypes": "Request"
+            },
+            "enableLiveMetricsFilters": true
+        },
+        "logLevel": {
+            "default": "Information",
+            "Host.Results": "Error",
+            "Function": "Information",
+            "Azure.Core": "Warning",
+            "Azure.Identity": "Warning"
+        }
+    },
+    "functionTimeout": "00:10:00",
+    "healthMonitor": {
+        "enabled": true,
+        "healthCheckInterval": "00:00:10",
+        "healthCheckWindow": "00:02:00",
+        "healthCheckThreshold": 6,
+        "counterThreshold": 0.80
+    },
+    "retry": {
+        "strategy": "exponentialBackoff",
+        "maxRetryCount": 3,
+        "minimumInterval": "00:00:02",
+        "maximumInterval": "00:00:30"
+    },
+    "extensions": {
+        "serviceBus": {
+            "prefetchCount": 10,
+            "maxConcurrentCalls": 5,
+            "autoCompleteMessages": false,
+            "sessionHandlerOptions": {
+                "autoComplete": false,
+                "messageWaitTimeout": "00:00:30",
+                "maxAutoRenewDuration": "00:05:00"
+            }
+        }
+    }
+}

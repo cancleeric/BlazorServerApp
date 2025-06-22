@@ -8,8 +8,32 @@ using CreditMonitoring.Api.Data.Repositories;
 using CreditMonitoring.Api.Services;
 using CreditMonitoring.Common.Models;
 using CreditMonitoring.Common.Services;
+using CreditMonitoring.Common.Services.Azure;
+using Azure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// === Azure 整合配置 ===
+// 1. 設定 Azure Key Vault（如果在 Azure 環境中）
+if (builder.Environment.IsProduction() || builder.Environment.IsStaging())
+{
+    var keyVaultUri = builder.Configuration["Azure:KeyVault:VaultUri"];
+    if (!string.IsNullOrEmpty(keyVaultUri))
+    {
+        builder.Configuration.AddAzureKeyVault(keyVaultUri, reloadOnChange: true);
+    }
+}
+
+// 2. 添加 Application Insights
+builder.Services.AddApplicationInsightsTelemetry(options =>
+{
+    options.ConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"];
+});
+
+// 3. 註冊 Azure 服務
+builder.Services.AddSingleton<IAzureKeyVaultService, AzureKeyVaultService>();
+builder.Services.AddSingleton<IAzureServiceBusService, AzureServiceBusService>();
+builder.Services.AddSingleton<IAzureMonitoringService, AzureMonitoringService>();
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -69,15 +93,45 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddDbContext<CreditMonitoringDbContext>(options =>
-    options.UseInMemoryDatabase("CreditMonitoringDb"));
+{
+    // 根據環境選擇資料庫
+    if (builder.Environment.IsDevelopment())
+    {
+        // 開發環境使用 In-Memory 資料庫
+        options.UseInMemoryDatabase("CreditMonitoringDb");
+    }
+    else
+    {
+        // 生產環境使用 Azure SQL Database
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+        options.UseSqlServer(connectionString, sqlOptions =>
+        {
+            sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 3,
+                maxRetryDelay: TimeSpan.FromSeconds(30),
+                errorNumbersToAdd: null);
+        });
+    }
+});
 
 builder.Services.AddScoped<ILoanAccountRepository, LoanAccountRepository>();
 builder.Services.AddScoped<ILoanAccountService, LoanAccountService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// === Azure 初始化 ===
+// 確保資料庫已建立（僅在非開發環境）
 if (!app.Environment.IsDevelopment())
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<CreditMonitoringDbContext>();
+        dbContext.Database.EnsureCreated();
+    }
+}
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();

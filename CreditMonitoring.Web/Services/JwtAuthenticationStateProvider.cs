@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using Microsoft.JSInterop;
 using CreditMonitoring.Common.Services;
 
 namespace CreditMonitoring.Web.Services
@@ -21,15 +21,14 @@ namespace CreditMonitoring.Web.Services
     /// - Decorator Pattern：擴展原有的身份認證功能
     /// 
     /// 安全考量：
-    /// 1. 使用ProtectedBrowserStorage加密儲存令牌
+    /// 1. 使用 localStorage 儲存令牌
     /// 2. 定期檢查令牌有效性
     /// 3. 自動處理令牌過期
     /// 4. 提供安全的登出機制
     /// </summary>
     public class JwtAuthenticationStateProvider : AuthenticationStateProvider
     {
-        private readonly ProtectedSessionStorage _sessionStorage;
-        private readonly ProtectedLocalStorage _localStorage;
+        private readonly IJSRuntime _jsRuntime;
         private readonly HttpClient _httpClient;
         private readonly ILogger<JwtAuthenticationStateProvider> _logger;
         
@@ -39,13 +38,11 @@ namespace CreditMonitoring.Web.Services
         private ClaimsPrincipal _currentUser = new(new ClaimsIdentity());
 
         public JwtAuthenticationStateProvider(
-            ProtectedSessionStorage sessionStorage,
-            ProtectedLocalStorage localStorage,
+            IJSRuntime jsRuntime,
             HttpClient httpClient,
             ILogger<JwtAuthenticationStateProvider> logger)
         {
-            _sessionStorage = sessionStorage;
-            _localStorage = localStorage;
+            _jsRuntime = jsRuntime;
             _httpClient = httpClient;
             _logger = logger;
         }
@@ -233,17 +230,14 @@ namespace CreditMonitoring.Web.Services
             {
                 _logger.LogError(ex, "JWT登出發生異常");
             }
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// 從瀏覽器儲存中讀取JWT令牌
         /// </summary>
         private async Task<string?> GetTokenAsync()
         {
             try
             {
-                var result = await _sessionStorage.GetAsync<string>(TOKEN_KEY);
-                return result.Success ? result.Value : null;
+                return await _jsRuntime.InvokeAsync<string>("localStorage.getItem", TOKEN_KEY);
             }
             catch
             {
@@ -256,7 +250,7 @@ namespace CreditMonitoring.Web.Services
         /// </summary>
         private async Task StoreTokenAsync(string token)
         {
-            await _sessionStorage.SetAsync(TOKEN_KEY, token);
+            await _jsRuntime.InvokeVoidAsync("localStorage.setItem", TOKEN_KEY, token);
         }
 
         /// <summary>
@@ -264,7 +258,7 @@ namespace CreditMonitoring.Web.Services
         /// </summary>
         private async Task ClearTokenAsync()
         {
-            await _sessionStorage.DeleteAsync(TOKEN_KEY);
+            await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", TOKEN_KEY);
         }
 
         /// <summary>
@@ -273,7 +267,7 @@ namespace CreditMonitoring.Web.Services
         private async Task StoreUserInfoAsync(object userInfo)
         {
             var json = JsonSerializer.Serialize(userInfo);
-            await _sessionStorage.SetAsync(USER_INFO_KEY, json);
+            await _jsRuntime.InvokeVoidAsync("localStorage.setItem", USER_INFO_KEY, json);
         }
 
         /// <summary>
@@ -281,7 +275,7 @@ namespace CreditMonitoring.Web.Services
         /// </summary>
         private async Task ClearUserInfoAsync()
         {
-            await _sessionStorage.DeleteAsync(USER_INFO_KEY);
+            await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", USER_INFO_KEY);
         }
 
         /// <summary>

@@ -7,8 +7,23 @@ using CreditMonitoring.Web.Services;
 using CreditMonitoring.Web.Interfaces;
 using CreditMonitoring.Common.Interfaces;
 using CreditMonitoring.Common.Services;
+using CreditMonitoring.Common.Services.Azure;
+using CreditMonitoring.Web.Hubs;
+using Azure.Identity;
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Azure Key Vault 設定 (僅在生產環境)
+if (builder.Environment.IsProduction())
+{
+    var keyVaultName = builder.Configuration["KeyVault:VaultName"];
+    if (!string.IsNullOrEmpty(keyVaultName))
+    {
+        var keyVaultUri = new Uri($"https://{keyVaultName}.vault.azure.net/");
+        builder.Configuration.AddAzureKeyVault(keyVaultUri, new DefaultAzureCredential());
+    }
+}
 
 // 設定API基礎URL
 var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5000";
@@ -79,6 +94,32 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddHttpContextAccessor();
+
+// 添加SignalR服務
+builder.Services.AddSignalR();
+
+// Azure服務註冊
+if (builder.Environment.IsProduction())
+{
+    // Azure Key Vault服務
+    builder.Services.AddScoped<IAzureKeyVaultService, AzureKeyVaultService>();
+    
+    // Azure Service Bus服務
+    builder.Services.AddScoped<IAzureServiceBusService, AzureServiceBusService>();
+    
+    // Azure監控服務
+    builder.Services.AddScoped<IAzureMonitoringService, AzureMonitoringService>();
+    
+    // SignalR通知服務
+    builder.Services.AddScoped<ISignalRNotificationService, SignalRNotificationService>();
+    
+    // Application Insights
+    builder.Services.AddApplicationInsightsTelemetry(options =>
+    {
+        options.ConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"];
+    });
+}
+
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 builder.Services.AddHttpClient<IWebCreditMonitoringService, CreditMonitoringService>();
 builder.Services.AddScoped<ICreditMonitoringService>(provider => 
@@ -104,6 +145,7 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 app.MapBlazorHub();
+app.MapHub<CreditMonitoringHub>("/creditmonitoringhub");
 app.MapFallbackToPage("/_Host");
 
 app.Run();

@@ -1,0 +1,388 @@
+@page "/api-demo"
+@using SimpleJwtWeb.Services
+@using SimpleJwtWeb.Models
+@inject IApiService ApiService
+@inject IAuthService AuthService
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<PageTitle>API 演示 - SimpleJwtWeb</PageTitle>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2>
+                <i class="fas fa-code me-2"></i>
+                JWT API 演示
+            </h2>
+            <p class="lead">這個頁面演示了如何在 Blazor 中調用不同權限級別的 JWT 保護 API</p>
+        </div>
+    </div>
+
+    @if (isAuthenticated)
+    {
+        <div class="alert alert-success">
+            <h5>
+                <i class="fas fa-check-circle me-2"></i>
+                當前用戶資訊
+            </h5>
+            <p class="mb-0">
+                <strong>用戶名：</strong> @currentUser?.Username &nbsp;&nbsp;
+                <strong>角色：</strong> @currentUser?.Role &nbsp;&nbsp;
+                <strong>郵箱：</strong> @currentUser?.Email
+            </p>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <h5>
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                未登入
+            </h5>
+            <p class="mb-0">
+                部分 API 需要登入才能訪問。請先 <a href="/login" class="alert-link">登入</a> 您的帳戶。
+            </p>
+        </div>
+    }
+
+    <div class="row">
+        <!-- 公開 API -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-globe me-2"></i>
+                        公開 API
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        這個 API 端點不需要任何認證，任何人都可以訪問。
+                    </p>
+                    <button class="btn btn-success" @onclick="CallPublicApi" disabled="@isLoading">
+                        @if (isLoading && currentApiCall == "public")
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        <i class="fas fa-play me-1"></i>
+                        調用公開 API
+                    </button>
+                    
+                    @if (!string.IsNullOrEmpty(publicApiResult))
+                    {
+                        <div class="mt-3">
+                            <h6>回應結果：</h6>
+                            <div class="bg-light p-3 rounded">
+                                <pre class="mb-0 small">@publicApiResult</pre>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- 受保護 API -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lock me-2"></i>
+                        受保護 API
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        這個 API 端點需要有效的 JWT 令牌才能訪問。
+                    </p>
+                    <button class="btn btn-primary" @onclick="CallProtectedApi" disabled="@isLoading">
+                        @if (isLoading && currentApiCall == "protected")
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        <i class="fas fa-play me-1"></i>
+                        調用受保護 API
+                    </button>
+                    
+                    @if (!string.IsNullOrEmpty(protectedApiResult))
+                    {
+                        <div class="mt-3">
+                            <h6>回應結果：</h6>
+                            <div class="bg-light p-3 rounded">
+                                <pre class="mb-0 small">@protectedApiResult</pre>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- 管理員 API -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-shield me-2"></i>
+                        管理員 API
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        這個 API 端點需要管理員角色權限才能訪問。
+                    </p>
+                    <button class="btn btn-danger" @onclick="CallAdminApi" disabled="@isLoading">
+                        @if (isLoading && currentApiCall == "admin")
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        <i class="fas fa-play me-1"></i>
+                        調用管理員 API
+                    </button>
+                    
+                    @if (!string.IsNullOrEmpty(adminApiResult))
+                    {
+                        <div class="mt-3">
+                            <h6>回應結果：</h6>
+                            <div class="bg-light p-3 rounded">
+                                <pre class="mb-0 small">@adminApiResult</pre>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- 用戶 API -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>
+                        用戶 API
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        這個 API 端點需要用戶角色權限才能訪問。
+                    </p>
+                    <button class="btn btn-info" @onclick="CallUserApi" disabled="@isLoading">
+                        @if (isLoading && currentApiCall == "user")
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        <i class="fas fa-play me-1"></i>
+                        調用用戶 API
+                    </button>
+                    
+                    @if (!string.IsNullOrEmpty(userApiResult))
+                    {
+                        <div class="mt-3">
+                            <h6>回應結果：</h6>
+                            <div class="bg-light p-3 rounded">
+                                <pre class="mb-0 small">@userApiResult</pre>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JWT 令牌資訊 -->
+    @if (isAuthenticated)
+    {
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-key me-2"></i>
+                            當前 JWT 令牌資訊
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-secondary mb-3" @onclick="ShowTokenInfo">
+                            <i class="fas fa-eye me-1"></i>
+                            @(showToken ? "隱藏" : "顯示") 令牌詳情
+                        </button>
+                        
+                        @if (showToken && !string.IsNullOrEmpty(currentToken))
+                        {
+                            <div class="bg-light p-3 rounded">
+                                <h6>JWT 令牌：</h6>
+                                <div class="small text-break bg-white p-2 rounded border">
+                                    @currentToken
+                                </div>
+                                
+                                @if (tokenInfo != null)
+                                {
+                                    <h6 class="mt-3">令牌內容：</h6>
+                                    <div class="small bg-white p-2 rounded border">
+                                        <pre class="mb-0">@tokenInfo</pre>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool isAuthenticated = false;
+    private UserInfo? currentUser;
+    private bool isLoading = false;
+    private string currentApiCall = "";
+    private bool showToken = false;
+    private string? currentToken;
+    private string? tokenInfo;
+    
+    private string publicApiResult = "";
+    private string protectedApiResult = "";
+    private string adminApiResult = "";
+    private string userApiResult = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckAuthStatus();
+        
+        // 訂閱認證狀態變更
+        AuthService.AuthStateChanged += OnAuthStateChanged;
+    }
+
+    private async void OnAuthStateChanged(bool authenticated)
+    {
+        await CheckAuthStatus();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task CheckAuthStatus()
+    {
+        isAuthenticated = await AuthService.IsAuthenticatedAsync();
+        if (isAuthenticated)
+        {
+            currentUser = await AuthService.GetCurrentUserAsync();
+            currentToken = await AuthService.GetTokenAsync();
+        }
+        else
+        {
+            currentUser = null;
+            currentToken = null;
+        }
+    }
+
+    private async Task CallPublicApi()
+    {
+        isLoading = true;
+        currentApiCall = "public";
+        try
+        {
+            publicApiResult = await ApiService.GetPublicDataAsync();
+        }
+        catch (Exception ex)
+        {
+            publicApiResult = $"錯誤: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            currentApiCall = "";
+        }
+    }
+
+    private async Task CallProtectedApi()
+    {
+        isLoading = true;
+        currentApiCall = "protected";
+        try
+        {
+            protectedApiResult = await ApiService.GetProtectedDataAsync();
+        }
+        catch (Exception ex)
+        {
+            protectedApiResult = $"錯誤: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            currentApiCall = "";
+        }
+    }
+
+    private async Task CallAdminApi()
+    {
+        isLoading = true;
+        currentApiCall = "admin";
+        try
+        {
+            adminApiResult = await ApiService.GetAdminDataAsync();
+        }
+        catch (Exception ex)
+        {
+            adminApiResult = $"錯誤: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            currentApiCall = "";
+        }
+    }
+
+    private async Task CallUserApi()
+    {
+        isLoading = true;
+        currentApiCall = "user";
+        try
+        {
+            userApiResult = await ApiService.GetUserDataAsync();
+        }
+        catch (Exception ex)
+        {
+            userApiResult = $"錯誤: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            currentApiCall = "";
+        }
+    }    private void ShowTokenInfo()
+    {
+        showToken = !showToken;
+        
+        if (showToken && !string.IsNullOrEmpty(currentToken))
+        {
+            try
+            {
+                var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                var token = handler.ReadJwtToken(currentToken);
+                
+                var info = new System.Text.StringBuilder();
+                info.AppendLine($"發行者: {token.Issuer}");
+                info.AppendLine($"受眾: {string.Join(", ", token.Audiences)}");
+                info.AppendLine($"發行時間: {token.ValidFrom:yyyy-MM-dd HH:mm:ss} UTC");
+                info.AppendLine($"過期時間: {token.ValidTo:yyyy-MM-dd HH:mm:ss} UTC");
+                info.AppendLine($"主體: {token.Subject}");
+                info.AppendLine();
+                info.AppendLine("聲明 (Claims):");
+                
+                foreach (var claim in token.Claims)
+                {
+                    info.AppendLine($"  {claim.Type}: {claim.Value}");
+                }
+                
+                tokenInfo = info.ToString();
+            }
+            catch (Exception ex)
+            {
+                tokenInfo = $"解析令牌時發生錯誤: {ex.Message}";
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        AuthService.AuthStateChanged -= OnAuthStateChanged;
+    }
+}
