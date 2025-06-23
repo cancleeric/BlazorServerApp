@@ -1,0 +1,26 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using SimpleJwtServerBlazor.Services
+@inject JwtAuthenticationStateProvider AuthProvider
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>首頁</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <h3>歡迎，@context.User.Identity?.Name！</h3>
+        <button class="btn btn-secondary" @onclick="Logout">登出</button>
+    </Authorized>
+    <NotAuthorized>
+        <h3>您尚未登入</h3>
+        <a class="btn btn-primary" href="/login">前往登入</a>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private async Task Logout()
+    {
+        await AuthProvider.LogoutAsync();
+        Navigation.NavigateTo("/login", true);
+    }
+}

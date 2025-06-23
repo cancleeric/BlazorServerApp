@@ -1,0 +1,43 @@
+@page "/login"
+@using SimpleJwtServerBlazor.Services
+@inject JwtAuthenticationStateProvider AuthProvider
+@inject NavigationManager Navigation
+
+<PageTitle>登入</PageTitle>
+
+<h3>JWT 登入</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+    <InputText @bind-Value="loginModel.Username" placeholder="帳號" class="form-control mb-2" />
+    <InputText @bind-Value="loginModel.Password" placeholder="密碼" type="password" class="form-control mb-2" />
+    <button class="btn btn-primary" type="submit">登入</button>
+</EditForm>
+
+@code {
+    private LoginModel loginModel = new();
+    private string? errorMessage;
+
+    private async Task HandleLogin()
+    {
+        var success = await AuthProvider.LoginAsync(loginModel.Username, loginModel.Password);
+        if (success)
+        {
+            Navigation.NavigateTo("/");
+        }
+        else
+        {
+            errorMessage = "帳號或密碼錯誤";
+        }
+    }
+
+    public class LoginModel
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}

@@ -1,0 +1,10 @@
+@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
+
+<CascadingAuthenticationState>
+    <div class="main-layout">
+        <div class="content px-4">
+            @Body
+        </div>
+    </div>
+</CascadingAuthenticationState>
