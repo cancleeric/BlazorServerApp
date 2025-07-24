@@ -1,0 +1,288 @@
+﻿@page "/"
+@using SimpleJwtWeb.Services
+@using SimpleJwtWeb.Models
+@inject IApiService ApiService
+@inject IAuthService AuthService
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<PageTitle>首頁 - SimpleJwtWeb</PageTitle>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="jumbotron bg-primary text-white text-center p-5 rounded mb-4">
+                <h1 class="display-4">
+                    <i class="fas fa-shield-alt me-3"></i>
+                    SimpleJwtWeb 範例
+                </h1>
+                <p class="lead">使用 Blazor Web App + JWT 認證的完整範例</p>
+                <hr class="my-4 bg-white">
+                <p>這個範例展示了如何在 Blazor 應用程式中實現 JWT 認證和調用受保護的 API</p>
+            </div>
+        </div>
+    </div>
+
+    @if (isAuthenticated)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-success">
+                    <h5>
+                        <i class="fas fa-user-check me-2"></i>
+                        歡迎回來，@currentUser?.Username！
+                    </h5>
+                    <p class="mb-0">
+                        <strong>角色：</strong> @currentUser?.Role &nbsp;&nbsp;
+                        <strong>郵箱：</strong> @currentUser?.Email
+                    </p>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-globe me-2"></i>
+                        公開 API 測試
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">測試不需要認證的公開 API 端點</p>
+                    <button class="btn btn-info" @onclick="CallPublicApi" disabled="@isLoading">
+                        @if (isLoading && currentApiCall == "public")
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        調用公開 API
+                    </button>
+                    @if (!string.IsNullOrEmpty(publicApiResult))
+                    {
+                        <div class="mt-3">
+                            <small class="text-muted">回應：</small>
+                            <div class="bg-light p-2 rounded small">@publicApiResult</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lock me-2"></i>
+                        受保護 API 測試
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">測試需要 JWT 認證的受保護 API 端點</p>
+                    <button class="btn btn-warning" @onclick="CallProtectedApi" disabled="@isLoading">
+                        @if (isLoading && currentApiCall == "protected")
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        調用受保護 API
+                    </button>
+                    @if (!string.IsNullOrEmpty(protectedApiResult))
+                    {
+                        <div class="mt-3">
+                            <small class="text-muted">回應：</small>
+                            <div class="bg-light p-2 rounded small">@protectedApiResult</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-shield me-2"></i>
+                        管理員 API 測試
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">測試需要管理員權限的 API 端點</p>
+                    <button class="btn btn-danger" @onclick="CallAdminApi" disabled="@isLoading">
+                        @if (isLoading && currentApiCall == "admin")
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        調用管理員 API
+                    </button>
+                    @if (!string.IsNullOrEmpty(adminApiResult))
+                    {
+                        <div class="mt-3">
+                            <small class="text-muted">回應：</small>
+                            <div class="bg-light p-2 rounded small">@adminApiResult</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>
+                        用戶 API 測試
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">測試需要用戶權限的 API 端點</p>
+                    <button class="btn btn-success" @onclick="CallUserApi" disabled="@isLoading">
+                        @if (isLoading && currentApiCall == "user")
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        調用用戶 API
+                    </button>
+                    @if (!string.IsNullOrEmpty(userApiResult))
+                    {
+                        <div class="mt-3">
+                            <small class="text-muted">回應：</small>
+                            <div class="bg-light p-2 rounded small">@userApiResult</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!isAuthenticated)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <h5>
+                        <i class="fas fa-info-circle me-2"></i>
+                        需要登入
+                    </h5>
+                    <p>要測試受保護的 API，請先<a href="/login" class="alert-link">登入</a>您的帳戶。</p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool isAuthenticated = false;
+    private UserInfo? currentUser;
+    private bool isLoading = false;
+    private string currentApiCall = "";
+    
+    private string publicApiResult = "";
+    private string protectedApiResult = "";
+    private string adminApiResult = "";
+    private string userApiResult = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckAuthStatus();
+        
+        // 訂閱認證狀態變更
+        AuthService.AuthStateChanged += OnAuthStateChanged;
+    }
+
+    private async void OnAuthStateChanged(bool authenticated)
+    {
+        await CheckAuthStatus();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task CheckAuthStatus()
+    {
+        isAuthenticated = await AuthService.IsAuthenticatedAsync();
+        if (isAuthenticated)
+        {
+            currentUser = await AuthService.GetCurrentUserAsync();
+        }
+    }
+
+    private async Task CallPublicApi()
+    {
+        isLoading = true;
+        currentApiCall = "public";
+        try
+        {
+            publicApiResult = await ApiService.GetPublicDataAsync();
+        }
+        catch (Exception ex)
+        {
+            publicApiResult = $"錯誤: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            currentApiCall = "";
+        }
+    }
+
+    private async Task CallProtectedApi()
+    {
+        isLoading = true;
+        currentApiCall = "protected";
+        try
+        {
+            protectedApiResult = await ApiService.GetProtectedDataAsync();
+        }
+        catch (Exception ex)
+        {
+            protectedApiResult = $"錯誤: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            currentApiCall = "";
+        }
+    }
+
+    private async Task CallAdminApi()
+    {
+        isLoading = true;
+        currentApiCall = "admin";
+        try
+        {
+            adminApiResult = await ApiService.GetAdminDataAsync();
+        }
+        catch (Exception ex)
+        {
+            adminApiResult = $"錯誤: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            currentApiCall = "";
+        }
+    }
+
+    private async Task CallUserApi()
+    {
+        isLoading = true;
+        currentApiCall = "user";
+        try
+        {
+            userApiResult = await ApiService.GetUserDataAsync();
+        }
+        catch (Exception ex)
+        {
+            userApiResult = $"錯誤: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            currentApiCall = "";
+        }
+    }
+
+    public void Dispose()
+    {
+        AuthService.AuthStateChanged -= OnAuthStateChanged;
+    }
+}

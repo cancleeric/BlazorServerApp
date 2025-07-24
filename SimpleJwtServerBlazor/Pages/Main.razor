@@ -1,0 +1,49 @@
+@page "/main"
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+
+<h3>JWT 驗證狀態範例</h3>
+
+<AuthorizeView>
+    <Authorized>
+        <p style="color:green">✅ 已登入！</p>
+        <p>用戶名稱：@userName</p>
+        <button class="btn btn-secondary" @onclick="Logout">登出</button>
+    </Authorized>
+    <NotAuthorized>
+        <p style="color:red">❌ 尚未登入</p>
+        <button class="btn btn-primary" @onclick="GoLogin">前往登入</button>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private string? userName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = state.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            // 取出 JWT 內的 username/sub/name claim
+            userName = user.FindFirst(c => c.Type == "username")?.Value
+                ?? user.FindFirst(c => c.Type == "sub")?.Value
+                ?? user.Identity.Name;
+        }
+    }
+
+    private async Task Logout()
+    {
+        if (AuthStateProvider is SimpleJwtServerBlazor.Services.JwtAuthenticationStateProvider jwtProvider)
+        {
+            await jwtProvider.LogoutAsync();
+            Navigation.NavigateTo("/main", true);
+        }
+    }
+
+    private void GoLogin()
+    {
+        Navigation.NavigateTo("/login");
+    }
+}

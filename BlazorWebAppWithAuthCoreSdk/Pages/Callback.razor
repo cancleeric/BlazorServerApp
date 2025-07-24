@@ -1,0 +1,26 @@
+@page "/callback"
+@inject BlazorWebAppWithAuthCoreSdk.Services.IAuthService AuthService
+@inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager
+
+<h3>處理登入回調...</h3>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        // Use System.Web.HttpUtility.ParseQueryString for parsing query string
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var token = query["token"];
+
+        if (!string.IsNullOrEmpty(token))
+        {
+            await AuthService.HandleLoginCallbackAsync(token);
+            NavigationManager.NavigateTo("/", forceLoad: true); // Redirect to home or previous page
+        }
+        else
+        {
+            // Handle error or no token scenario
+            NavigationManager.NavigateTo("/login-failed"); // Redirect to an error page
+        }
+    }
+}
