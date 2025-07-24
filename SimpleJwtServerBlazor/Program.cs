@@ -1,17 +1,26 @@
-
+using BlazorAuthSdk.Authentication;
+using BlazorAuthSdk.Services;
+using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor(); // 新增 ServerSide Blazor 支援
-// 新增：註冊 HttpClient
-builder.Services.AddHttpClient();
-// 新增：註冊 JwtAuthenticationStateProvider
-builder.Services.AddScoped<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider, SimpleJwtServerBlazor.Services.JwtAuthenticationStateProvider>();
-builder.Services.AddScoped<SimpleJwtServerBlazor.Services.JwtAuthenticationStateProvider>();
-// 新增：Blazor Server Authentication
+builder.Services.AddServerSideBlazor();
+
+// Register BlazorAuthSdk services
+builder.Services.AddHttpClient<IAuthClientService, AuthClientService>();
+builder.Services.AddScoped<IAuthClientService, AuthClientService>();
+builder.Services.AddScoped<IAuthService, BlazorAuthSdk.Services.AuthService>();
+
+// Register the custom AuthenticationStateProvider from BlazorAuthSdk
+builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthenticationStateProvider>();
+
+// Add AuthorizationCore for Blazor's built-in authorization features
 builder.Services.AddAuthorizationCore();
+
+// Add IConfiguration for BlazorAuthSdk services
+builder.Services.AddSingleton<Microsoft.Extensions.Configuration.IConfiguration>(builder.Configuration);
 
 var app = builder.Build();
 
@@ -19,7 +28,6 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -28,10 +36,12 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+// IMPORTANT: UseAuthentication must be before UseAuthorization
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
-app.MapBlazorHub(); // 新增 Blazor Hub
-app.MapFallbackToPage("/_Host"); // 新增 fallback
+app.MapBlazorHub();
+app.MapFallbackToPage("/_Host");
 
 app.Run();

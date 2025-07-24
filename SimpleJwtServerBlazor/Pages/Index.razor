@@ -1,8 +1,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
-@using SimpleJwtServerBlazor.Services
-@inject JwtAuthenticationStateProvider AuthProvider
+@using BlazorAuthSdk.Services
+@inject BlazorAuthSdk.Services.IAuthService AuthService
 @inject NavigationManager Navigation
-@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>首頁</PageTitle>
 
@@ -20,7 +19,7 @@
 @code {
     private async Task Logout()
     {
-        await AuthProvider.LogoutAsync();
+        await AuthService.LogoutAsync();
         Navigation.NavigateTo("/login", true);
     }
 }

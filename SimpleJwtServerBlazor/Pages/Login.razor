@@ -1,9 +1,10 @@
 @page "/login"
-@using SimpleJwtServerBlazor.Services
-@inject JwtAuthenticationStateProvider AuthProvider
+@using BlazorAuthSdk.Services
+@using BlazorAuthSdk.Models
+@inject BlazorAuthSdk.Services.IAuthService AuthService
 @inject NavigationManager Navigation
 
-<PageTitle>登入</PageTitle>
+<PageTitle>登入 - SimpleJwtServerBlazor</PageTitle>
 
 <h3>JWT 登入</h3>
 
@@ -19,25 +20,12 @@
 </EditForm>
 
 @code {
-    private LoginModel loginModel = new();
+    private BlazorAuthSdk.Models.LoginRequest loginModel = new();
     private string? errorMessage;
 
-    private async Task HandleLogin()
+    private void HandleLogin()
     {
-        var success = await AuthProvider.LoginAsync(loginModel.Username, loginModel.Password);
-        if (success)
-        {
-            Navigation.NavigateTo("/");
-        }
-        else
-        {
-            errorMessage = "帳號或密碼錯誤";
-        }
-    }
-
-    public class LoginModel
-    {
-        public string Username { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
+        // Initiate login by redirecting to AuthenticationServer
+        AuthService.InitiateLogin();
     }
 }
