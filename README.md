@@ -20,10 +20,18 @@
 | **CreditMonitoring.Web** | Blazor Server | .NET 8, SignalR | **核心應用**。提供信貸監控的儀表板、案件管理和報表功能。 |
 | **CreditMonitoring.Api** | Web API | .NET 8, EF Core | 為 `CreditMonitoring.Web` 提供後端 RESTful API 服務。 |
 | **AuthenticationServer** | Web API | .NET 8 | 一個獨立的、輕量級的 JWT **身份驗證伺服器**。 |
+| **AuthCoreSdk** | 類別庫 | .NET 8 | 提供核心認證服務，包含使用者服務、JWT 生成和控制器邏輯。 |
+| **BlazorAuthSdk** | 類別庫 | .NET 8 | Blazor 客戶端認證 SDK，封裝了 JWT 狀態管理和客戶端服務。 |
 | **SimpleJwtApi** | Web API | .NET 8 | 一個**示範用 API**，展示如何使用 JWT 保護端點。 |
-| **SimpleJwtWeb** | Blazor Web App | .NET 8, JWT | 一個**示範用前端**，展示如何整合 JWT 認證並與受保護的 API 互動。 |
+| **SimpleJwtServerBlazor** | Blazor Server | .NET 8, JWT | 一個**示範用前端**，展示如何整合 JWT 認證並與受保護的 API 互動。 |
+| **SimpleCookieWeb** | Blazor Web App | .NET 8 | 展示傳統 Cookie 身份驗證的 Blazor Web App。 |
+| **MyIdentityServerWithAspNetIdentity** | IdentityServer | .NET 8, Duende IdentityServer | 使用 ASP.NET Identity 的完整 IdentityServer 實作。 |
+| **BlazorWebAppWithAuthCoreSdk** | Blazor Web App | .NET 8 | 整合 `AuthCoreSdk` 進行身份驗證的 Blazor Web App。 |
+| **BlazorServerPureDemo** | Blazor Server | .NET 8 | 一個純粹的 Blazor Server 專案範本。 |
+| **BlazorWebAppPureDemo** | Blazor Web App | .NET 8 | 一個純粹的 Blazor Web App 專案範本。 |
 | **CreditMonitoring.Functions** | Azure Functions | .NET 8 | 包含用於處理信用警報的 Azure Functions。 |
 | **CreditMonitoring.Common** | 類別庫 | .NET 8 | 包含所有專案共用的資料模型、介面和服務。 |
+| **CreditMonitoring.Tests** | xUnit | .NET 8 | 包含信貸監控系統的整合測試。 |
 
 ---
 
@@ -36,6 +44,18 @@
 - **設計文件**: 我們為 JWT 的設計和實施準備了詳細的文件，涵蓋了從單體到大規模微服務架構的策略。
   - [**JWT 微服務身份驗證設計**](./JWT_Authentication_Design_Microservices.md)
   - [**大規模微服務 JWT 策略**](./Large_Scale_JWT_Authentication_Strategy.md)
+
+### 多種認證實作範例
+
+這個 Repository 展示了多種身份驗證方法，您可以根據需求選擇最適合的方案：
+
+- **JWT (JSON Web Token)**: 
+  - `SimpleJwtApi` + `SimpleJwtServerBlazor`: 一個完整的 JWT 客戶端與伺服器實作。
+  - `AuthenticationServer` + `AuthCoreSdk` + `BlazorAuthSdk`: 一個更模組化的 JWT 認證架構，將核心邏輯封裝在 SDK 中。
+- **Cookie-based Authentication**:
+  - `SimpleCookieWeb`: 一個使用傳統 Cookie 進行身份驗證的 Blazor Web App。
+- **IdentityServer**:
+  - `MyIdentityServerWithAspNetIdentity`: 一個使用 Duende IdentityServer 和 ASP.NET Identity 的完整 OpenID Connect 和 OAuth 2.0 解決方案。
 
 ---
 

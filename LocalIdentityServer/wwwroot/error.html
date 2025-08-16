@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>認證錯誤 - Local Identity Server</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .error-icon {
+            font-size: 48px;
+            color: #e74c3c;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #e74c3c;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+
+        .error-code {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: monospace;
+            margin: 20px 0;
+        }
+
+        .error-description {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #856404;
+        }
+
+        .actions {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 0 10px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="error-icon">⚠️</div>
+
+        <h1>認證過程發生錯誤</h1>
+
+        <div class="error-code">
+            <strong>錯誤代碼:</strong> <span id="error-code">unknown_error</span>
+        </div>
+
+        <div class="error-description" id="error-description" style="display: none;">
+            <strong>錯誤說明:</strong> <span id="error-description-text"></span>
+        </div>
+
+        <div class="actions">
+            <a href="javascript:history.back()" class="btn btn-secondary">返回上一頁</a>
+            <a href="/login" class="btn btn-primary">重新登入</a>
+        </div>
+
+        <div class="footer">
+            <p>Local Identity Server © 2024</p>
+            <p>如果問題持續發生，請聯繫系統管理員</p>
+        </div>
+    </div>
+
+    <script>
+        // 從 URL 參數中提取錯誤資訊
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // 設定錯誤資訊
+        document.addEventListener('DOMContentLoaded', function () {
+            const error = getUrlParameter('error') || 'unknown_error';
+            const errorDescription = getUrlParameter('error_description');
+
+            document.getElementById('error-code').textContent = error;
+
+            if (errorDescription) {
+                document.getElementById('error-description-text').textContent = errorDescription;
+                document.getElementById('error-description').style.display = 'block';
+            }
+
+            // 根據錯誤類型調整標題
+            const errorTitles = {
+                'invalid_request': '無效的請求',
+                'unauthorized_client': '未授權的客戶端',
+                'access_denied': '存取被拒絕',
+                'unsupported_response_type': '不支援的回應類型',
+                'invalid_scope': '無效的權限範圍',
+                'server_error': '伺服器錯誤',
+                'temporarily_unavailable': '服務暫時無法使用',
+                'invalid_client': '無效的客戶端',
+                'invalid_grant': '無效的授權',
+                'unsupported_grant_type': '不支援的授權類型'
+            };
+
+            if (errorTitles[error]) {
+                document.querySelector('h1').textContent = errorTitles[error];
+            }
+        });
+    </script>
+</body>
+
+</html>
