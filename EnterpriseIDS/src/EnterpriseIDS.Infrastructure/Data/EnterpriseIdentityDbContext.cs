@@ -29,6 +29,18 @@ public class EnterpriseIdentityDbContext : DbContext
     public DbSet<Tenant> Tenants { get; set; } = null!;
     public DbSet<TenantConfiguration> TenantConfigurations { get; set; } = null!;
 
+    // 使用者和認證相關的 DbSet
+    public DbSet<User> Users { get; set; } = null!;
+    public DbSet<Group> Groups { get; set; } = null!;
+    public DbSet<Role> Roles { get; set; } = null!;
+    public DbSet<UserGroupMembership> UserGroupMemberships { get; set; } = null!;
+    public DbSet<UserRole> UserRoles { get; set; } = null!;
+    public DbSet<GroupRoleMapping> GroupRoleMappings { get; set; } = null!;
+    public DbSet<RolePermission> RolePermissions { get; set; } = null!;
+
+    // LDAP 相關的 DbSet
+    public DbSet<LdapConfiguration> LdapConfigurations { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

@@ -12,40 +12,52 @@ public class TestRunner
     /// </summary>
     public static async Task<bool> RunAllCoreTests()
     {
-        Console.WriteLine("🧪 Running EnterpriseIDS Core Module Tests");
-        Console.WriteLine("=" + new string('=', 50));
+        Console.WriteLine("🧪 Running EnterpriseIDS Multi-Tenant Architecture Test Suite");
+        Console.WriteLine("=" + new string('=', 60));
 
-        var testResults = new List<bool>();
+        var testResults = new List<(string TestSuite, bool Passed)>();
 
-        // 執行單元測試
-        Console.WriteLine("\n📋 Running Tenant Entity Tests...");
-        testResults.Add(TenantTests.RunAllTests());
+        // 1. 核心實體測試
+        Console.WriteLine("\n📦 Testing Core Entities...");
+        testResults.Add(("Tenant Entity Tests", TenantTests.RunAllTests()));
+        testResults.Add(("User Entity Tests", UserEntityTests.RunAllTests()));
+        testResults.Add(("Group Entity Tests", GroupEntityTests.RunAllTests()));
+        testResults.Add(("LDAP Configuration Tests", LdapConfigurationTests.RunAllTests()));
 
-        Console.WriteLine("\n🔗 Running Tenant Context Service Tests...");
-        testResults.Add(TenantContextServiceTests.RunAllTests());
-
-        Console.WriteLine("\n🔍 Running Tenant Resolver Tests...");
-        testResults.Add(await TenantResolverTests.RunAllTests());
-
-        // 執行整合測試
-        Console.WriteLine("\n🔄 Running Multi-Tenant Integration Tests...");
-        testResults.Add(await MultiTenantIntegrationTests.RunAllIntegrationTests());
+        // Integration tests
+        Console.WriteLine("\n🔗 Testing Integration Scenarios...");
+        testResults.Add(("Multi-Tenant Integration Tests", await MultiTenantIntegrationTests.RunAllIntegrationTests()));
+        
+        Console.WriteLine("\n⚙️ Core Entity Tests completed.");
+        Console.WriteLine("🏗️ Infrastructure tests available separately.");
 
         // 計算總體結果
-        var passedSuites = testResults.Count(r => r);
+        var passedSuites = testResults.Count(r => r.Passed);
         var totalSuites = testResults.Count;
-        var allPassed = testResults.All(r => r);
+        var allPassed = testResults.All(r => r.Passed);
 
+        // 顯示詳細結果
         Console.WriteLine("\n" + new string('=', 60));
-        Console.WriteLine($"📊 Overall Core Module Test Results: {passedSuites}/{totalSuites} test suites passed");
+        Console.WriteLine("📊 TEST RESULTS SUMMARY");
+        Console.WriteLine(new string('=', 60));
+
+        foreach (var (testSuite, passed) in testResults)
+        {
+            var status = passed ? "✅ PASSED" : "❌ FAILED";
+            Console.WriteLine($"{status} - {testSuite}");
+        }
+
+        Console.WriteLine($"\n📈 Overall Results: {passedSuites}/{totalSuites} test suites passed");
+        var successRate = (double)passedSuites / totalSuites * 100;
+        Console.WriteLine($"📊 Success Rate: {successRate:F1}%");
         
         if (allPassed)
         {
-            Console.WriteLine("🎉 All core module tests PASSED!");
+            Console.WriteLine("\n🎉 All tests PASSED! Multi-tenant architecture implementation is working correctly.");
         }
         else
         {
-            Console.WriteLine("❌ Some core module tests FAILED!");
+            Console.WriteLine("\n❌ Some tests FAILED! Please review the failed test suites above.");
         }
 
         return allPassed;
