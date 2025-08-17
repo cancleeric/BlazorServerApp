@@ -39,7 +39,31 @@ public class UserEntity
     public DateTime? LastLoginAt { get; set; }
     public bool IsActive { get; set; } = true;
 
+    /// <summary>
+    /// 是否已啟用 MFA
+    /// </summary>
+    public bool IsMfaEnabled { get; set; } = false;
+
+    /// <summary>
+    /// 是否要求 MFA (強制啟用)
+    /// </summary>
+    public bool RequireMfa { get; set; } = false;
+
+    /// <summary>
+    /// 預設 MFA 方法
+    /// </summary>
+    [MaxLength(20)]
+    public string? DefaultMfaMethod { get; set; }
+
+    /// <summary>
+    /// MFA 設定時間
+    /// </summary>
+    public DateTime? MfaSetupAt { get; set; }
+
     // 導航屬性
     public virtual ICollection<AuthorizationCodeEntity> AuthorizationCodes { get; set; } = new List<AuthorizationCodeEntity>();
     public virtual ICollection<RefreshTokenEntity> RefreshTokens { get; set; } = new List<RefreshTokenEntity>();
+    public virtual ICollection<UserMfaEntity> MfaMethods { get; set; } = new List<UserMfaEntity>();
+    public virtual ICollection<MfaBackupCodeEntity> MfaBackupCodes { get; set; } = new List<MfaBackupCodeEntity>();
+    public virtual ICollection<MfaAuditLogEntity> MfaAuditLogs { get; set; } = new List<MfaAuditLogEntity>();
 }
