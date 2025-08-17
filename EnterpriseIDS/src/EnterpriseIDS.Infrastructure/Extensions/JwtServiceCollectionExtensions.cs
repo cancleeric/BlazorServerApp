@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -103,7 +104,7 @@ public static class JwtServiceCollectionExtensions
                 {
                     if (context.Exception is SecurityTokenExpiredException)
                     {
-                        context.Response.Headers.Add("Token-Expired", "true");
+                        context.Response.Headers["Token-Expired"] = "true";
                     }
                     return Task.CompletedTask;
                 },

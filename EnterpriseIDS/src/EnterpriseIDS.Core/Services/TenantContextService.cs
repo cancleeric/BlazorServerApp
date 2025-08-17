@@ -345,6 +345,44 @@ public class TenantContextService : ITenantContextService
         info["hasTenantContext"] = true;
         return info;
     }
+
+    /// <summary>
+    /// 繞過租戶篩選執行操作
+    /// </summary>
+    public async Task<T> WithoutTenantFilterAsync<T>(Func<Task<T>> operation)
+    {
+        var originalTenant = _currentTenant.Value;
+        try
+        {
+            // 暫時設為超級管理員上下文（null）
+            _currentTenant.Value = null;
+            return await operation();
+        }
+        finally
+        {
+            // 恢復原本的租戶上下文
+            _currentTenant.Value = originalTenant;
+        }
+    }
+
+    /// <summary>
+    /// 繞過租戶篩選執行操作
+    /// </summary>
+    public async Task WithoutTenantFilterAsync(Func<Task> operation)
+    {
+        var originalTenant = _currentTenant.Value;
+        try
+        {
+            // 暫時設為超級管理員上下文（null）
+            _currentTenant.Value = null;
+            await operation();
+        }
+        finally
+        {
+            // 恢復原本的租戶上下文
+            _currentTenant.Value = originalTenant;
+        }
+    }
 }
 
 /// <summary>

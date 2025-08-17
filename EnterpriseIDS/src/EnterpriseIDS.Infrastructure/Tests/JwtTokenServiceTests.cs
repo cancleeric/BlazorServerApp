@@ -4,6 +4,7 @@ using Moq;
 using Xunit;
 using EnterpriseIDS.Core.Entities;
 using EnterpriseIDS.Core.Interfaces;
+using EnterpriseIDS.Infrastructure.Data.Repositories;
 using EnterpriseIDS.Infrastructure.Services;
 
 namespace EnterpriseIDS.Infrastructure.Tests;

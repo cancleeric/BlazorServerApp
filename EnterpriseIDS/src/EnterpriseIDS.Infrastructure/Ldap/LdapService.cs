@@ -170,7 +170,7 @@ public class LdapService : ILdapService
                 Metrics = new Dictionary<string, object>
                 {
                     ["ConnectionPoolSize"] = _connectionPool.Count,
-                    ["LastSyncTime"] = configuration.LastSyncAt,
+                    ["LastSyncTime"] = configuration.LastSyncAt?.ToString() ?? "Never",
                     ["SyncStatus"] = configuration.LastSyncStatus.ToString()
                 }
             };
@@ -345,7 +345,7 @@ public class LdapService : ILdapService
             var nestedGroups = new HashSet<string>();
             var filter = $"(&(objectClass=group)({configuration.GroupMemberAttribute}={groupDn}))";
             var searchResults = await Task.Run(() => 
-                connection.Search(configuration.GetGroupSearchBaseDn(), LdapConnection.ScopeSubtree, filter, null, false), 
+                connection.Search(configuration.GetGroupSearchBaseDn(), LdapConnection.ScopeSub, filter, null, false), 
                 cancellationToken);
 
             while (searchResults.HasMore())
@@ -618,7 +618,7 @@ public class LdapService : ILdapService
 
             var filter = $"(&{configuration.UserSearchFilter.Replace("{0}", "*" + searchTerm + "*")}(|(cn=*{searchTerm}*)(mail=*{searchTerm}*)(displayName=*{searchTerm}*)))";
             var searchResults = await Task.Run(() => 
-                connection.Search(configuration.GetUserSearchBaseDn(), LdapConnection.ScopeSubtree, filter, null, false), 
+                connection.Search(configuration.GetUserSearchBaseDn(), LdapConnection.ScopeSub, filter, null, false), 
                 cancellationToken);
 
             var users = new List<LdapUserModel>();
@@ -719,7 +719,7 @@ public class LdapService : ILdapService
 
             var filter = configuration.UserSearchFilter.Replace("{0}", "*");
             var searchResults = await Task.Run(() => 
-                connection.Search(configuration.GetUserSearchBaseDn(), LdapConnection.ScopeSubtree, filter, null, false), 
+                connection.Search(configuration.GetUserSearchBaseDn(), LdapConnection.ScopeSub, filter, null, false), 
                 cancellationToken);
 
             var users = new List<LdapUserModel>();
@@ -773,7 +773,7 @@ public class LdapService : ILdapService
             var groups = new HashSet<string>();
             var filter = $"(&(objectClass=group)({configuration.GroupMemberAttribute}={user.DistinguishedName}))";
             var searchResults = await Task.Run(() => 
-                connection.Search(configuration.GetGroupSearchBaseDn(), LdapConnection.ScopeSubtree, filter, null, false), 
+                connection.Search(configuration.GetGroupSearchBaseDn(), LdapConnection.ScopeSub, filter, null, false), 
                 cancellationToken);
 
             while (searchResults.HasMore())
@@ -995,10 +995,10 @@ public class LdapService : ILdapService
         });
     }
 
-    private async Task<IEnumerable<string>> GetUserGroupsAsync(string username, LdapConfiguration configuration, bool includeNested, CancellationToken cancellationToken)
+    private Task<IEnumerable<string>> GetUserGroupsAsync(string username, LdapConfiguration configuration, bool includeNested, CancellationToken cancellationToken)
     {
         // 這是一個私有實作，為了支援認證功能
         // 實際實作需要完整的群組搜尋邏輯
-        return new List<string>();
+        return Task.FromResult<IEnumerable<string>>(new List<string>());
     }
 }

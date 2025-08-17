@@ -1,4 +1,5 @@
 using EnterpriseIDS.Core.Entities;
+using EnterpriseIDS.Core.Services;
 
 namespace EnterpriseIDS.Core.Interfaces;
 
@@ -133,6 +134,26 @@ public interface ITenantContextService
     /// 檢查功能是否啟用
     /// </summary>
     Task<bool> IsFeatureEnabledAsync(string featureName, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 繞過租戶篩選執行操作
+    /// </summary>
+    Task<T> WithoutTenantFilterAsync<T>(Func<Task<T>> operation);
+
+    /// <summary>
+    /// 繞過租戶篩選執行操作
+    /// </summary>
+    Task WithoutTenantFilterAsync(Func<Task> operation);
+
+    /// <summary>
+    /// 建立租戶上下文管理器
+    /// </summary>
+    TenantContextManager CreateContextManager(TenantContext? tenantContext);
+
+    /// <summary>
+    /// 建立租戶上下文管理器
+    /// </summary>
+    TenantContextManager CreateContextManager(Guid? tenantId);
 }
 
 /// <summary>
