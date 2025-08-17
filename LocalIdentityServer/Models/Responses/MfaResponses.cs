@@ -34,6 +34,21 @@ public class MfaStatusResponse
     /// 總備用碼數量
     /// </summary>
     public int BackupCodesTotal { get; set; }
+
+    /// <summary>
+    /// 是否啟用 TOTP
+    /// </summary>
+    public bool IsTotpEnabled { get; set; }
+
+    /// <summary>
+    /// 是否啟用 SMS
+    /// </summary>
+    public bool IsSmsEnabled { get; set; }
+
+    /// <summary>
+    /// 是否啟用 Email
+    /// </summary>
+    public bool IsEmailEnabled { get; set; }
 }
 
 /// <summary>
@@ -410,4 +425,80 @@ public class MfaAuditLogInfo
     /// 風險評分
     /// </summary>
     public int RiskScore { get; set; }
+}
+
+/// <summary>
+/// 設置 TOTP 回應
+/// </summary>
+public class SetupTotpResponse
+{
+    /// <summary>
+    /// 密鑰
+    /// </summary>
+    public string SecretKey { get; set; } = default!;
+
+    /// <summary>
+    /// QR Code URI
+    /// </summary>
+    public string QrCodeUri { get; set; } = default!;
+
+    /// <summary>
+    /// 是否設置成功
+    /// </summary>
+    public bool IsSetupSuccessful { get; set; } = true;
+}
+
+/// <summary>
+/// 驗證 TOTP 回應
+/// </summary>
+public class VerifyTotpResponse
+{
+    /// <summary>
+    /// 驗證是否有效
+    /// </summary>
+    public bool IsValid { get; set; }
+}
+
+/// <summary>
+/// 產生備援代碼回應
+/// </summary>
+public class GenerateBackupCodesResponse
+{
+    /// <summary>
+    /// 備援代碼列表
+    /// </summary>
+    public List<string> BackupCodes { get; set; } = new();
+}
+
+/// <summary>
+/// 驗證備援代碼回應
+/// </summary>
+public class VerifyBackupCodeResponse
+{
+    /// <summary>
+    /// 驗證是否有效
+    /// </summary>
+    public bool IsValid { get; set; }
+}
+
+/// <summary>
+/// 設置 SMS 回應
+/// </summary>
+public class SetupSmsResponse
+{
+    /// <summary>
+    /// 是否設置成功
+    /// </summary>
+    public bool IsSetupSuccessful { get; set; }
+}
+
+/// <summary>
+/// 停用 MFA 回應
+/// </summary>
+public class DisableMfaResponse
+{
+    /// <summary>
+    /// 是否停用成功
+    /// </summary>
+    public bool IsDisabled { get; set; }
 }

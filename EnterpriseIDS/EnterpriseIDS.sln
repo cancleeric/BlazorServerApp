@@ -1,0 +1,53 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{8B2F4F41-5F0A-4B7B-9B2F-4F41A5B7B9B2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{9C3F5F41-6F0A-4B7B-9B2F-5F41B6B7C9C3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnterpriseIDS.Core", "src\EnterpriseIDS.Core\EnterpriseIDS.Core.csproj", "{1A2B3C4D-5E6F-7890-ABCD-EF1234567890}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnterpriseIDS.Infrastructure", "src\EnterpriseIDS.Infrastructure\EnterpriseIDS.Infrastructure.csproj", "{2B3C4D5E-6F78-90AB-CDEF-123456789012}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnterpriseIDS.Application", "src\EnterpriseIDS.Application\EnterpriseIDS.Application.csproj", "{3C4D5E6F-7890-ABCD-EF12-34567890ABCD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnterpriseIDS.Presentation", "src\EnterpriseIDS.Presentation\EnterpriseIDS.Presentation.csproj", "{4D5E6F78-90AB-CDEF-1234-567890ABCDEF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnterpriseIDS.Shared", "src\EnterpriseIDS.Shared\EnterpriseIDS.Shared.csproj", "{5E6F7890-ABCD-EF12-3456-7890ABCDEF12}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1A2B3C4D-5E6F-7890-ABCD-EF1234567890}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A2B3C4D-5E6F-7890-ABCD-EF1234567890}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A2B3C4D-5E6F-7890-ABCD-EF1234567890}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A2B3C4D-5E6F-7890-ABCD-EF1234567890}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B3C4D5E-6F78-90AB-CDEF-123456789012}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B3C4D5E-6F78-90AB-CDEF-123456789012}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B3C4D5E-6F78-90AB-CDEF-123456789012}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B3C4D5E-6F78-90AB-CDEF-123456789012}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C4D5E6F-7890-ABCD-EF12-34567890ABCD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C4D5E6F-7890-ABCD-EF12-34567890ABCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C4D5E6F-7890-ABCD-EF12-34567890ABCD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C4D5E6F-7890-ABCD-EF12-34567890ABCD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D5E6F78-90AB-CDEF-1234-567890ABCDEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D5E6F78-90AB-CDEF-1234-567890ABCDEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D5E6F78-90AB-CDEF-1234-567890ABCDEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D5E6F78-90AB-CDEF-1234-567890ABCDEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E6F7890-ABCD-EF12-3456-7890ABCDEF12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E6F7890-ABCD-EF12-3456-7890ABCDEF12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E6F7890-ABCD-EF12-3456-7890ABCDEF12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E6F7890-ABCD-EF12-3456-7890ABCDEF12}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1A2B3C4D-5E6F-7890-ABCD-EF1234567890} = {8B2F4F41-5F0A-4B7B-9B2F-4F41A5B7B9B2}
+		{2B3C4D5E-6F78-90AB-CDEF-123456789012} = {8B2F4F41-5F0A-4B7B-9B2F-4F41A5B7B9B2}
+		{3C4D5E6F-7890-ABCD-EF12-34567890ABCD} = {8B2F4F41-5F0A-4B7B-9B2F-4F41A5B7B9B2}
+		{4D5E6F78-90AB-CDEF-1234-567890ABCDEF} = {8B2F4F41-5F0A-4B7B-9B2F-4F41A5B7B9B2}
+		{5E6F7890-ABCD-EF12-3456-7890ABCDEF12} = {8B2F4F41-5F0A-4B7B-9B2F-4F41A5B7B9B2}
+	EndGlobalSection
+EndGlobal

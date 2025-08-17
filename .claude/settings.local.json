@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(neritic:*)",
+      "Bash(mkdir:*)",
+      "Bash(dotnet test:*)",
+      "Bash(dotnet build)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet ef migrations add:*)",
+      "Bash(csc:*)",
+      "Bash(mv:*)",
+      "Bash(dotnet clean:*)",
+      "Bash(curl:*)",
+      "Bash(dotnet ef database:*)",
+      "Bash(git add:*)",
+      "Bash(find:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

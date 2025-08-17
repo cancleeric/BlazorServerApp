@@ -214,3 +214,101 @@ public class MfaUnlockRequest
     [MaxLength(20)]
     public string Method { get; set; } = default!;
 }
+
+/// <summary>
+/// 設置 TOTP 請求
+/// </summary>
+public class SetupTotpRequest
+{
+    /// <summary>
+    /// 使用者ID
+    /// </summary>
+    [Required]
+    public string UserId { get; set; } = default!;
+}
+
+/// <summary>
+/// 驗證 TOTP 請求
+/// </summary>
+public class VerifyTotpRequest
+{
+    /// <summary>
+    /// 使用者ID
+    /// </summary>
+    [Required]
+    public string UserId { get; set; } = default!;
+
+    /// <summary>
+    /// TOTP 代碼
+    /// </summary>
+    [Required]
+    [StringLength(6, MinimumLength = 6)]
+    public string Code { get; set; } = default!;
+}
+
+/// <summary>
+/// 產生備援代碼請求
+/// </summary>
+public class GenerateBackupCodesRequest
+{
+    /// <summary>
+    /// 使用者ID
+    /// </summary>
+    [Required]
+    public string UserId { get; set; } = default!;
+}
+
+/// <summary>
+/// 驗證備援代碼請求
+/// </summary>
+public class VerifyBackupCodeRequest
+{
+    /// <summary>
+    /// 使用者ID
+    /// </summary>
+    [Required]
+    public string UserId { get; set; } = default!;
+
+    /// <summary>
+    /// 備援代碼
+    /// </summary>
+    [Required]
+    public string Code { get; set; } = default!;
+}
+
+/// <summary>
+/// 設置 SMS 請求
+/// </summary>
+public class SetupSmsRequest
+{
+    /// <summary>
+    /// 使用者ID
+    /// </summary>
+    [Required]
+    public string UserId { get; set; } = default!;
+
+    /// <summary>
+    /// 手機號碼
+    /// </summary>
+    [Required]
+    [Phone]
+    public string PhoneNumber { get; set; } = default!;
+}
+
+/// <summary>
+/// 停用 MFA 請求
+/// </summary>
+public class DisableMfaRequest
+{
+    /// <summary>
+    /// 使用者ID
+    /// </summary>
+    [Required]
+    public string UserId { get; set; } = default!;
+
+    /// <summary>
+    /// MFA 方法
+    /// </summary>
+    [Required]
+    public string Method { get; set; } = default!;
+}

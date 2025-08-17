@@ -174,3 +174,6 @@ app.MapGet("/error", (HttpContext ctx) =>
 });
 
 app.Run();
+
+// 讓 Program 類別對測試專案可見
+public partial class Program { }
