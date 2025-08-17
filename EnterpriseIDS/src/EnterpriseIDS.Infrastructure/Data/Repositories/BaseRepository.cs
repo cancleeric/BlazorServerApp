@@ -126,7 +126,7 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
 /// 支援租戶感知的儲存庫實作
 /// </summary>
 /// <typeparam name="TEntity">實體類型</typeparam>
-public class TenantAwareRepository<TEntity> : BaseRepository<TEntity>, ITenantAwareRepository<TEntity> 
+public class TenantAwareRepository<TEntity> : BaseRepository<TEntity>, IRepository<TEntity>, ITenantAwareRepository<TEntity> 
     where TEntity : TenantAwareEntity
 {
     protected readonly ITenantContextService _tenantContextService;
@@ -280,4 +280,187 @@ public class TenantAwareRepository<TEntity> : BaseRepository<TEntity>, ITenantAw
     {
         await _context.WithoutTenantFilterAsync(operation);
     }
+
+    #region IRepository 額外的介面方法實作
+
+    /// <summary>
+    /// 根據條件取得第一個實體
+    /// </summary>
+    public virtual async Task<TEntity?> FirstOrDefaultAsync(
+        Expression<Func<TEntity, bool>> predicate,
+        CancellationToken cancellationToken = default)
+    {
+        return await GetTenantQueryableNoTracking()
+            .FirstOrDefaultAsync(predicate, cancellationToken);
+    }
+
+    /// <summary>
+    /// 檢查是否存在符合條件的實體
+    /// </summary>
+    public virtual async Task<bool> AnyAsync(
+        Expression<Func<TEntity, bool>> predicate,
+        CancellationToken cancellationToken = default)
+    {
+        return await GetTenantQueryableNoTracking()
+            .AnyAsync(predicate, cancellationToken);
+    }
+
+    /// <summary>
+    /// 取得分頁實體
+    /// </summary>
+    public virtual async Task<(IEnumerable<TEntity> Items, int TotalCount)> GetPagedAsync(
+        int pageNumber,
+        int pageSize,
+        Expression<Func<TEntity, bool>>? predicate = null,
+        Expression<Func<TEntity, object>>? orderBy = null,
+        bool orderByDescending = false,
+        CancellationToken cancellationToken = default)
+    {
+        var query = GetTenantQueryableNoTracking();
+
+        if (predicate != null)
+        {
+            query = query.Where(predicate);
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        if (orderBy != null)
+        {
+            query = orderByDescending
+                ? query.OrderByDescending(orderBy)
+                : query.OrderBy(orderBy);
+        }
+
+        var items = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (items, totalCount);
+    }
+
+    /// <summary>
+    /// 批次新增實體
+    /// </summary>
+    public virtual async Task<IEnumerable<TEntity>> AddRangeAsync(
+        IEnumerable<TEntity> entities,
+        CancellationToken cancellationToken = default)
+    {
+        var entityList = entities.ToList();
+        var currentTenantId = _tenantContextService.GetCurrentTenantId();
+
+        foreach (var entity in entityList)
+        {
+            if (entity.TenantId == Guid.Empty)
+            {
+                if (currentTenantId.HasValue)
+                {
+                    entity.TenantId = currentTenantId.Value;
+                }
+                else if (!_tenantContextService.IsSuperAdminContext())
+                {
+                    throw new InvalidOperationException("無法確定當前租戶，無法批次新增實體");
+                }
+            }
+        }
+
+        await _dbSet.AddRangeAsync(entityList, cancellationToken);
+        await SaveChangesAsync(cancellationToken);
+        return entityList;
+    }
+
+    /// <summary>
+    /// 批次更新實體
+    /// </summary>
+    public virtual async Task<IEnumerable<TEntity>> UpdateRangeAsync(
+        IEnumerable<TEntity> entities,
+        CancellationToken cancellationToken = default)
+    {
+        var entityList = entities.ToList();
+
+        foreach (var entity in entityList)
+        {
+            if (!_tenantContextService.IsSuperAdminContext() && 
+                !_tenantContextService.HasTenantAccess(entity.TenantId))
+            {
+                throw new UnauthorizedAccessException($"沒有權限修改租戶 {entity.TenantId} 的實體");
+            }
+        }
+
+        _dbSet.UpdateRange(entityList);
+        await SaveChangesAsync(cancellationToken);
+        return entityList;
+    }
+
+    /// <summary>
+    /// 刪除實體
+    /// </summary>
+    public virtual async Task<bool> DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
+    {
+        if (!_tenantContextService.IsSuperAdminContext() && 
+            !_tenantContextService.HasTenantAccess(entity.TenantId))
+        {
+            throw new UnauthorizedAccessException($"沒有權限刪除租戶 {entity.TenantId} 的實體");
+        }
+
+        _dbSet.Remove(entity);
+        await SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    /// <summary>
+    /// 根據 ID 刪除實體
+    /// </summary>
+    public virtual async Task<bool> DeleteByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var entity = await GetTenantQueryable()
+            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+
+        if (entity == null)
+        {
+            return false;
+        }
+
+        return await DeleteAsync(entity, cancellationToken);
+    }
+
+    /// <summary>
+    /// 批次刪除實體
+    /// </summary>
+    public virtual async Task<int> DeleteRangeAsync(
+        IEnumerable<TEntity> entities,
+        CancellationToken cancellationToken = default)
+    {
+        var entityList = entities.ToList();
+
+        foreach (var entity in entityList)
+        {
+            if (!_tenantContextService.IsSuperAdminContext() && 
+                !_tenantContextService.HasTenantAccess(entity.TenantId))
+            {
+                throw new UnauthorizedAccessException($"沒有權限刪除租戶 {entity.TenantId} 的實體");
+            }
+        }
+
+        _dbSet.RemoveRange(entityList);
+        await SaveChangesAsync(cancellationToken);
+        return entityList.Count;
+    }
+
+    /// <summary>
+    /// 根據條件批次刪除實體
+    /// </summary>
+    public virtual async Task<int> DeleteWhereAsync(
+        Expression<Func<TEntity, bool>> predicate,
+        CancellationToken cancellationToken = default)
+    {
+        var entities = await GetTenantQueryable()
+            .Where(predicate)
+            .ToListAsync(cancellationToken);
+
+        return await DeleteRangeAsync(entities, cancellationToken);
+    }
+
+    #endregion
 }

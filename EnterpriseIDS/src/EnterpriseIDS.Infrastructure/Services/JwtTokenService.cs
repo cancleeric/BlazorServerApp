@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using MSTokenValidationResult = Microsoft.IdentityModel.Tokens.TokenValidationResult;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -279,7 +280,7 @@ public class JwtTokenService : IJwtTokenService
     /// <summary>
     /// 驗證 JWT Token
     /// </summary>
-    public async Task<TokenValidationResult> ValidateTokenAsync(
+    public async Task<Core.Interfaces.TokenValidationResult> ValidateTokenAsync(
         string token,
         bool validateLifetime = true,
         bool validateAudience = true,
@@ -305,7 +306,7 @@ public class JwtTokenService : IJwtTokenService
 
             if (jwtToken == null)
             {
-                return new TokenValidationResult
+                return new Core.Interfaces.TokenValidationResult
                 {
                     IsValid = false,
                     ErrorMessage = "Invalid JWT token format",
@@ -316,7 +317,7 @@ public class JwtTokenService : IJwtTokenService
             var jwtId = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Jti)?.Value;
             if (string.IsNullOrEmpty(jwtId))
             {
-                return new TokenValidationResult
+                return new Core.Interfaces.TokenValidationResult
                 {
                     IsValid = false,
                     ErrorMessage = "Missing JWT ID claim",
@@ -328,7 +329,7 @@ public class JwtTokenService : IJwtTokenService
             var isBlacklisted = await IsTokenBlacklistedAsync(jwtId, cancellationToken);
             if (isBlacklisted)
             {
-                return new TokenValidationResult
+                return new Core.Interfaces.TokenValidationResult
                 {
                     IsValid = false,
                     ErrorMessage = "Token is blacklisted",
@@ -340,7 +341,7 @@ public class JwtTokenService : IJwtTokenService
             var tokenEntity = await _tokenRepository.GetByJwtIdAsync(jwtId, cancellationToken);
             if (tokenEntity == null)
             {
-                return new TokenValidationResult
+                return new Core.Interfaces.TokenValidationResult
                 {
                     IsValid = false,
                     ErrorMessage = "Token not found in database",
@@ -350,7 +351,7 @@ public class JwtTokenService : IJwtTokenService
 
             if (!tokenEntity.IsValid())
             {
-                return new TokenValidationResult
+                return new Core.Interfaces.TokenValidationResult
                 {
                     IsValid = false,
                     ErrorMessage = "Token is not valid",
@@ -361,7 +362,7 @@ public class JwtTokenService : IJwtTokenService
             // 更新使用資訊
             await _tokenRepository.UpdateTokenUsageAsync(jwtId, cancellationToken: cancellationToken);
 
-            return new TokenValidationResult
+            return new Core.Interfaces.TokenValidationResult
             {
                 IsValid = true,
                 Claims = principal.Claims,
@@ -375,7 +376,7 @@ public class JwtTokenService : IJwtTokenService
         }
         catch (SecurityTokenExpiredException)
         {
-            return new TokenValidationResult
+            return new Core.Interfaces.TokenValidationResult
             {
                 IsValid = false,
                 ErrorMessage = "Token has expired",
@@ -384,7 +385,7 @@ public class JwtTokenService : IJwtTokenService
         }
         catch (SecurityTokenInvalidSignatureException)
         {
-            return new TokenValidationResult
+            return new Core.Interfaces.TokenValidationResult
             {
                 IsValid = false,
                 ErrorMessage = "Invalid token signature",
@@ -394,7 +395,7 @@ public class JwtTokenService : IJwtTokenService
         catch (Exception ex)
         {
             _logger.LogError(ex, "驗證 Token 失敗: {Token}", token);
-            return new TokenValidationResult
+            return new Core.Interfaces.TokenValidationResult
             {
                 IsValid = false,
                 ErrorMessage = "Token validation failed",
