@@ -1,4 +1,106 @@
+using EnterpriseIDS.Core.Entities;
+
 namespace EnterpriseIDS.Core.ValueObjects;
+
+/// <summary>
+/// 租戶上下文值對象
+/// </summary>
+public class TenantContext
+{
+    /// <summary>
+    /// 租戶 ID
+    /// </summary>
+    public Guid TenantId { get; set; }
+
+    /// <summary>
+    /// 租戶名稱
+    /// </summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 租戶顯示名稱
+    /// </summary>
+    public string DisplayName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 是否啟用
+    /// </summary>
+    public bool IsActive { get; set; } = true;
+
+    /// <summary>
+    /// 租戶主題
+    /// </summary>
+    public string Theme { get; set; } = "default";
+
+    /// <summary>
+    /// 資料庫連線字串
+    /// </summary>
+    public string? DatabaseConnection { get; set; }
+
+    /// <summary>
+    /// 租戶設定
+    /// </summary>
+    public Dictionary<string, object> Settings { get; set; } = new();
+
+    /// <summary>
+    /// 租戶品牌設定
+    /// </summary>
+    public TenantBranding? Branding { get; set; }
+
+    /// <summary>
+    /// 租戶配額設定
+    /// </summary>
+    public TenantQuotas? Quotas { get; set; }
+
+    /// <summary>
+    /// 租戶安全設定
+    /// </summary>
+    public TenantSecuritySettings? SecuritySettings { get; set; }
+
+    /// <summary>
+    /// 建立時間
+    /// </summary>
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// 更新時間
+    /// </summary>
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// 是否為預設租戶
+    /// </summary>
+    public bool IsDefault { get; set; } = false;
+
+    /// <summary>
+    /// 租戶狀態
+    /// </summary>
+    public TenantStatus Status { get; set; } = TenantStatus.Active;
+
+    /// <summary>
+    /// 租戶網域名稱
+    /// </summary>
+    public List<string> DomainNames { get; set; } = new();
+
+    /// <summary>
+    /// 快取鍵值
+    /// </summary>
+    public string GetCacheKey()
+    {
+        return $"tenant_context:{TenantId}";
+    }
+
+    /// <summary>
+    /// 驗證租戶上下文有效性
+    /// </summary>
+    public bool IsValid()
+    {
+        return TenantId != Guid.Empty &&
+               !string.IsNullOrWhiteSpace(Name) &&
+               IsActive &&
+               Status == TenantStatus.Active;
+    }
+}
 
 /// <summary>
 /// 租戶品牌設定值對象
