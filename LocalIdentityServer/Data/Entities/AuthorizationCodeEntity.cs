@@ -63,6 +63,23 @@ public class AuthorizationCodeEntity
 
     public DateTime? UsedAt { get; set; }
 
+    /// <summary>
+    /// MFA 驗證狀態 - 標記是否已完成 MFA 驗證
+    /// </summary>
+    [MaxLength(10)]
+    public string? MfaVerified { get; set; }
+
+    /// <summary>
+    /// 已驗證的 MFA 方法
+    /// </summary>
+    [MaxLength(50)]
+    public string? MfaMethod { get; set; }
+
+    /// <summary>
+    /// MFA 驗證完成時間
+    /// </summary>
+    public DateTime? MfaVerifiedAt { get; set; }
+
     // 外鍵關係
     [ForeignKey(nameof(ClientId))]
     public virtual ClientEntity Client { get; set; } = default!;
