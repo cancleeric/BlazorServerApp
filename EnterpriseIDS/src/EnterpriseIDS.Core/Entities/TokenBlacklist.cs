@@ -90,7 +90,7 @@ public class TokenBlacklist : TenantAwareEntity
     /// <summary>
     /// 關聯的租戶
     /// </summary>
-    public Tenant? Tenant { get; set; }
+    public new Tenant? Tenant { get; set; }
 
     /// <summary>
     /// 加入黑名單的使用者

@@ -145,7 +145,7 @@ public class JwtToken : TenantAwareEntity
     /// <summary>
     /// 關聯的租戶
     /// </summary>
-    public Tenant? Tenant { get; set; }
+    public new Tenant? Tenant { get; set; }
 
     /// <summary>
     /// 關聯的 Refresh Token
