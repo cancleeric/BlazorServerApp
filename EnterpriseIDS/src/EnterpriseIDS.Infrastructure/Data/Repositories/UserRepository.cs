@@ -377,7 +377,7 @@ public class UserRepository : TenantAwareRepository<User>, IUserRepository
 
         foreach (var user in orphanedUsers)
         {
-            user.Status = UserStatus.Disabled;
+            user.Status = UserStatus.Inactive;
         }
 
         if (orphanedUsers.Any())

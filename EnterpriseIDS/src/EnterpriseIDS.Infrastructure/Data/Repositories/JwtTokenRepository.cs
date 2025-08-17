@@ -9,9 +9,12 @@ namespace EnterpriseIDS.Infrastructure.Data.Repositories;
 /// <summary>
 /// JWT Token Repository 實作
 /// </summary>
-public class JwtTokenRepository : BaseRepository<JwtToken>, IJwtTokenRepository
+public class JwtTokenRepository : TenantAwareRepository<JwtToken>, IJwtTokenRepository
 {
-    public JwtTokenRepository(EnterpriseIdentityDbContext context) : base(context)
+    public JwtTokenRepository(
+        EnterpriseIdentityDbContext context,
+        ITenantContextService tenantContextService) 
+        : base(context, tenantContextService)
     {
     }
 

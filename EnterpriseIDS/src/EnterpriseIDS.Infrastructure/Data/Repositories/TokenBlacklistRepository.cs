@@ -7,9 +7,12 @@ namespace EnterpriseIDS.Infrastructure.Data.Repositories;
 /// <summary>
 /// Token 黑名單 Repository 實作
 /// </summary>
-public class TokenBlacklistRepository : BaseRepository<TokenBlacklist>, ITokenBlacklistRepository
+public class TokenBlacklistRepository : TenantAwareRepository<TokenBlacklist>, ITokenBlacklistRepository
 {
-    public TokenBlacklistRepository(EnterpriseIdentityDbContext context) : base(context)
+    public TokenBlacklistRepository(
+        EnterpriseIdentityDbContext context,
+        ITenantContextService tenantContextService) 
+        : base(context, tenantContextService)
     {
     }
 

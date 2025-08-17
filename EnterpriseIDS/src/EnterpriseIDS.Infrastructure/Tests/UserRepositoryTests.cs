@@ -183,7 +183,7 @@ public class UserRepositoryTests : IDisposable
             TenantId = _testTenantId,
             Username = "inactiveuser",
             Email = "inactive@example.com",
-            Status = UserStatus.Disabled,
+            Status = UserStatus.Inactive,
             CreatedAt = DateTime.UtcNow
         };
         _context.Users.Add(inactiveUser);
