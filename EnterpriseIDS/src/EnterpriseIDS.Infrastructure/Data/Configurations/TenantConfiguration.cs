@@ -11,8 +11,14 @@ public class TenantEntityConfiguration : IEntityTypeConfiguration<Tenant>
 {
     public void Configure(EntityTypeBuilder<Tenant> builder)
     {
-        // 表格名稱
-        builder.ToTable("Tenants");
+        // 表格名稱和約束
+        builder.ToTable("Tenants", t =>
+        {
+            t.HasCheckConstraint("CK_Tenants_Slug_Format", 
+                "[Slug] NOT LIKE '%[^a-z0-9-]%' AND [Slug] NOT LIKE '-%' AND [Slug] NOT LIKE '%-'");
+            t.HasCheckConstraint("CK_Tenants_Email_Format",
+                "[ContactEmail] IS NULL OR [ContactEmail] LIKE '%@%.%'");
+        });
 
         // 主鍵
         builder.HasKey(t => t.Id);
@@ -88,6 +94,14 @@ public class TenantEntityConfiguration : IEntityTypeConfiguration<Tenant>
             .HasColumnName("Metadata")
             .HasColumnType("nvarchar(max)");
 
+        // 忽略計算屬性
+        builder.Ignore(t => t.Metadata);
+        builder.Ignore(t => t.Branding);
+        builder.Ignore(t => t.Quotas);
+        builder.Ignore(t => t.SecuritySettings);
+        builder.Ignore(t => t.EnabledFeatures);
+        builder.Ignore(t => t.AllowedDomains);
+
         // 日期屬性
         builder.Property(t => t.SubscriptionStartDate)
             .HasColumnType("datetime2");
@@ -136,12 +150,7 @@ public class TenantEntityConfiguration : IEntityTypeConfiguration<Tenant>
         builder.HasIndex(t => new { t.Status, t.IsDeleted })
             .HasDatabaseName("IX_Tenants_Status_IsDeleted");
 
-        // 檢查約束
-        builder.HasCheckConstraint("CK_Tenants_Slug_Format", 
-            "[Slug] NOT LIKE '%[^a-z0-9-]%' AND [Slug] NOT LIKE '-%' AND [Slug] NOT LIKE '%-'");
-
-        builder.HasCheckConstraint("CK_Tenants_Email_Format",
-            "[ContactEmail] IS NULL OR [ContactEmail] LIKE '%@%.%'");
+        // 檢查約束 - 移到 ToTable 配置中
 
         // 預設值
         builder.Property(t => t.TenantType)
@@ -208,8 +217,20 @@ public class TenantConfigurationEntityConfiguration : IEntityTypeConfiguration<C
 {
     public void Configure(EntityTypeBuilder<Core.Entities.TenantConfiguration> builder)
     {
-        // 表格名稱
-        builder.ToTable("TenantConfigurations");
+        // 表格名稱和約束
+        builder.ToTable("TenantConfigurations", t =>
+        {
+            t.HasCheckConstraint("CK_TenantConfigurations_ConfigKey_Format",
+                "[ConfigKey] NOT LIKE '% %' AND [ConfigKey] NOT LIKE '%[^a-zA-Z0-9._-]%'");
+            t.HasCheckConstraint("CK_TenantConfigurations_ConfigType_Valid",
+                "[ConfigType] IN ('string', 'int', 'long', 'double', 'decimal', 'bool', 'datetime', 'json')");
+            t.HasCheckConstraint("CK_TenantConfigurations_Version_Positive",
+                "[Version] > 0");
+            t.HasCheckConstraint("CK_TenantConfigurations_SortOrder_NonNegative",
+                "[SortOrder] >= 0");
+            t.HasCheckConstraint("CK_TenantConfigurations_EffectiveDate_BeforeExpiry",
+                "[EffectiveDate] IS NULL OR [ExpiryDate] IS NULL OR [EffectiveDate] < [ExpiryDate]");
+        });
 
         // 主鍵
         builder.HasKey(tc => tc.Id);
@@ -318,21 +339,7 @@ public class TenantConfigurationEntityConfiguration : IEntityTypeConfiguration<C
             .HasDatabaseName("IX_TenantConfigurations_IsRequired")
             .HasFilter("[IsRequired] = 1");
 
-        // 檢查約束
-        builder.HasCheckConstraint("CK_TenantConfigurations_ConfigKey_Format",
-            "[ConfigKey] NOT LIKE '% %' AND [ConfigKey] NOT LIKE '%[^a-zA-Z0-9._-]%'");
-
-        builder.HasCheckConstraint("CK_TenantConfigurations_ConfigType_Valid",
-            "[ConfigType] IN ('string', 'int', 'long', 'double', 'decimal', 'bool', 'datetime', 'json')");
-
-        builder.HasCheckConstraint("CK_TenantConfigurations_Version_Positive",
-            "[Version] > 0");
-
-        builder.HasCheckConstraint("CK_TenantConfigurations_SortOrder_NonNegative",
-            "[SortOrder] >= 0");
-
-        builder.HasCheckConstraint("CK_TenantConfigurations_EffectiveDate_BeforeExpiry",
-            "[EffectiveDate] IS NULL OR [ExpiryDate] IS NULL OR [EffectiveDate] < [ExpiryDate]");
+        // 檢查約束 - 移到 ToTable 配置中
     }
 
     /// <summary>
