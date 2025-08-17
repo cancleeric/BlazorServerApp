@@ -45,6 +45,13 @@ public class RefreshTokenEntity
     [MaxLength(200)]
     public string? ReplacedByToken { get; set; }
 
+    /// <summary>
+    /// Token 家族識別碼 - 用於追蹤同一授權產生的所有 Token
+    /// </summary>
+    [Required]
+    [MaxLength(50)]
+    public string TokenFamily { get; set; } = default!;
+
     public DateTime? UsedAt { get; set; }
 
     /// <summary>

@@ -53,6 +53,31 @@ public class RefreshTokenRepository : IRefreshTokenRepository
         }
     }
 
+    public async Task<RefreshTokenEntity> CreateAsync(RefreshTokenEntity refreshToken)
+    {
+        // CreateAsync 是 StoreAsync 的別名方法
+        return await StoreAsync(refreshToken);
+    }
+
+    public async Task<RefreshTokenEntity> UpdateAsync(RefreshTokenEntity refreshToken)
+    {
+        try
+        {
+            _logger.LogDebug("Updating refresh token for client: {ClientId}", refreshToken.ClientId);
+
+            _context.RefreshTokens.Update(refreshToken);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Refresh token updated successfully for client: {ClientId}", refreshToken.ClientId);
+            return refreshToken;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating refresh token");
+            throw;
+        }
+    }
+
     public async Task<RefreshTokenEntity?> GetByTokenAsync(string token)
     {
         try
@@ -188,6 +213,77 @@ public class RefreshTokenRepository : IRefreshTokenRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error revoking refresh token chain");
+            throw;
+        }
+    }
+
+    public async Task RevokeTokenFamilyAsync(string tokenFamily, string reason)
+    {
+        try
+        {
+            _logger.LogDebug("Revoking entire token family: {TokenFamily}", tokenFamily);
+
+            var familyTokens = await _context.RefreshTokens
+                .Where(rt => rt.TokenFamily == tokenFamily && !rt.IsRevoked)
+                .ToListAsync();
+
+            foreach (var token in familyTokens)
+            {
+                token.IsRevoked = true;
+                token.RevokedAt = DateTime.UtcNow;
+                token.RevokeReason = reason;
+            }
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogWarning("Token family revoked due to security concern. Family: {TokenFamily}, Affected tokens: {Count}", 
+                tokenFamily, familyTokens.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error revoking token family: {TokenFamily}", tokenFamily);
+            throw;
+        }
+    }
+
+    public async Task<List<RefreshTokenEntity>> GetByTokenFamilyAsync(string tokenFamily)
+    {
+        try
+        {
+            _logger.LogDebug("Retrieving tokens by family: {TokenFamily}", tokenFamily);
+
+            return await _context.RefreshTokens
+                .Where(rt => rt.TokenFamily == tokenFamily)
+                .OrderBy(rt => rt.CreatedAt)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving tokens by family: {TokenFamily}", tokenFamily);
+            throw;
+        }
+    }
+
+    public async Task<bool> IsTokenReusedAsync(string token)
+    {
+        try
+        {
+            _logger.LogDebug("Checking if token is reused: {TokenPrefix}", token.Substring(0, Math.Min(8, token.Length)));
+
+            var refreshToken = await _context.RefreshTokens
+                .FirstOrDefaultAsync(rt => rt.Token == token);
+
+            if (refreshToken == null)
+            {
+                return false;
+            }
+
+            // Token 被重用的條件：已使用且有人嘗試再次使用
+            return refreshToken.IsUsed || refreshToken.IsRevoked;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking token reuse");
             throw;
         }
     }

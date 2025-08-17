@@ -13,6 +13,16 @@ public interface IRefreshTokenRepository
     Task<RefreshTokenEntity> StoreAsync(RefreshTokenEntity refreshToken);
 
     /// <summary>
+    /// 建立新的刷新權杖 (別名方法，與 StoreAsync 相同)
+    /// </summary>
+    Task<RefreshTokenEntity> CreateAsync(RefreshTokenEntity refreshToken);
+
+    /// <summary>
+    /// 更新刷新權杖
+    /// </summary>
+    Task<RefreshTokenEntity> UpdateAsync(RefreshTokenEntity refreshToken);
+
+    /// <summary>
     /// 根據權杖查詢
     /// </summary>
     Task<RefreshTokenEntity?> GetByTokenAsync(string token);
@@ -31,6 +41,21 @@ public interface IRefreshTokenRepository
     /// 撤銷權杖鏈 (當發現重放攻擊時)
     /// </summary>
     Task RevokeTokenChainAsync(string token, string reason);
+
+    /// <summary>
+    /// 撤銷整個 Token 家族 (重用偵測時使用)
+    /// </summary>
+    Task RevokeTokenFamilyAsync(string tokenFamily, string reason);
+
+    /// <summary>
+    /// 根據 Token 家族查詢所有 Token
+    /// </summary>
+    Task<List<RefreshTokenEntity>> GetByTokenFamilyAsync(string tokenFamily);
+
+    /// <summary>
+    /// 檢查 Token 是否已被重用 (用於偵測可疑活動)
+    /// </summary>
+    Task<bool> IsTokenReusedAsync(string token);
 
     /// <summary>
     /// 清理過期的權杖

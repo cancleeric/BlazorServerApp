@@ -38,9 +38,15 @@ public interface IPersistedKeyRepository
     Task RevokeKeyAsync(string keyId);
 
     /// <summary>
+    /// 軟刪除金鑰 (標記為已刪除但不實際刪除)
+    /// </summary>
+    Task SoftDeleteKeyAsync(string keyId);
+
+    /// <summary>
     /// 清理過期的金鑰
     /// </summary>
-    Task CleanupExpiredKeysAsync();
+    /// <returns>清理的金鑰數量</returns>
+    Task<int> CleanupExpiredKeysAsync();
 
     /// <summary>
     /// 檢查是否需要金鑰輪替

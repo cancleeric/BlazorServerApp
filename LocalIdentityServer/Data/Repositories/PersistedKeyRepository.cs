@@ -245,7 +245,45 @@ public class PersistedKeyRepository : IPersistedKeyRepository
         }
     }
 
-    public async Task CleanupExpiredKeysAsync()
+    public async Task SoftDeleteKeyAsync(string keyId)
+    {
+        try
+        {
+            _logger.LogDebug("Soft deleting key: {KeyId}", keyId);
+
+            var key = await _context.PersistedKeys
+                .FirstOrDefaultAsync(k => k.KeyId == keyId);
+
+            if (key == null)
+            {
+                _logger.LogWarning("Key not found for soft deletion: {KeyId}", keyId);
+                throw new InvalidOperationException($"Key with ID '{keyId}' not found");
+            }
+
+            // 軟刪除 - 標記為已刪除
+            key.IsDeleted = true;
+            key.DeletedAt = DateTime.UtcNow;
+            key.LastModifiedAt = DateTime.UtcNow;
+
+            // 如果是主要金鑰，取消主要狀態
+            if (key.IsPrimary)
+            {
+                key.IsPrimary = false;
+                _logger.LogWarning("Primary key {KeyId} was soft deleted, primary status removed", keyId);
+            }
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Key soft deleted successfully: {KeyId}", keyId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error soft deleting key: {KeyId}", keyId);
+            throw;
+        }
+    }
+
+    public async Task<int> CleanupExpiredKeysAsync()
     {
         try
         {
@@ -261,10 +299,12 @@ public class PersistedKeyRepository : IPersistedKeyRepository
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation("Cleaned up {Count} expired keys", expiredKeys.Count);
+                return expiredKeys.Count;
             }
             else
             {
                 _logger.LogDebug("No expired keys found");
+                return 0;
             }
         }
         catch (Exception ex)

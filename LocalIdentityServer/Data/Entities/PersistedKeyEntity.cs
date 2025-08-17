@@ -42,17 +42,27 @@ public class PersistedKeyEntity
     public string KeyType { get; set; } = default!;
 
     /// <summary>
-    /// 金鑰資料 (PEM 格式或 JSON)
+    /// 加密後的金鑰資料 (使用 Data Protection API 加密)
     /// </summary>
     [Required]
-    public string KeyData { get; set; } = default!;
+    public string EncryptedKeyData { get; set; } = default!;
 
     /// <summary>
-    /// 公鑰資料 (用於 JWKS)
+    /// 公鑰資料 (用於 JWKS，明文存儲)
     /// </summary>
     public string? PublicKeyData { get; set; }
 
+    /// <summary>
+    /// 金鑰版本號 (用於版本管理)
+    /// </summary>
+    public int Version { get; set; } = 1;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// 最後修改時間
+    /// </summary>
+    public DateTime LastModifiedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// 金鑰啟用時間
@@ -75,4 +85,14 @@ public class PersistedKeyEntity
     public bool IsRevoked { get; set; } = false;
 
     public DateTime? RevokedAt { get; set; }
+
+    /// <summary>
+    /// 軟刪除標記
+    /// </summary>
+    public bool IsDeleted { get; set; } = false;
+
+    /// <summary>
+    /// 軟刪除時間
+    /// </summary>
+    public DateTime? DeletedAt { get; set; }
 }
