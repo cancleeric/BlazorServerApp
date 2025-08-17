@@ -41,6 +41,10 @@ public class EnterpriseIdentityDbContext : DbContext
     // LDAP 相關的 DbSet
     public DbSet<LdapConfiguration> LdapConfigurations { get; set; } = null!;
 
+    // JWT Token 相關的 DbSet
+    public DbSet<JwtToken> JwtTokens { get; set; } = null!;
+    public DbSet<TokenBlacklist> TokenBlacklists { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -191,6 +195,54 @@ public class EnterpriseIdentityDbContext : DbContext
 
         modelBuilder.Entity<TenantConfiguration>()
             .HasIndex(tc => tc.ConfigKey);
+
+        // JWT Token 索引
+        modelBuilder.Entity<JwtToken>()
+            .HasIndex(t => t.JwtId)
+            .IsUnique()
+            .HasFilter("[IsDeleted] = 0");
+
+        modelBuilder.Entity<JwtToken>()
+            .HasIndex(t => new { t.UserId, t.TokenType, t.Status })
+            .HasFilter("[IsDeleted] = 0");
+
+        modelBuilder.Entity<JwtToken>()
+            .HasIndex(t => new { t.TenantId, t.TokenType })
+            .HasFilter("[IsDeleted] = 0");
+
+        modelBuilder.Entity<JwtToken>()
+            .HasIndex(t => t.ExpiresAt)
+            .HasFilter("[IsDeleted] = 0");
+
+        modelBuilder.Entity<JwtToken>()
+            .HasIndex(t => t.RefreshTokenId)
+            .HasFilter("[RefreshTokenId] IS NOT NULL AND [IsDeleted] = 0");
+
+        modelBuilder.Entity<JwtToken>()
+            .HasIndex(t => t.ParentTokenId)
+            .HasFilter("[ParentTokenId] IS NOT NULL AND [IsDeleted] = 0");
+
+        // Token Blacklist 索引
+        modelBuilder.Entity<TokenBlacklist>()
+            .HasIndex(b => b.JwtId)
+            .IsUnique()
+            .HasFilter("[IsDeleted] = 0");
+
+        modelBuilder.Entity<TokenBlacklist>()
+            .HasIndex(b => b.TokenHash)
+            .HasFilter("[IsDeleted] = 0");
+
+        modelBuilder.Entity<TokenBlacklist>()
+            .HasIndex(b => new { b.UserId, b.Type })
+            .HasFilter("[IsDeleted] = 0");
+
+        modelBuilder.Entity<TokenBlacklist>()
+            .HasIndex(b => b.BlacklistExpiresAt)
+            .HasFilter("[BlacklistExpiresAt] IS NOT NULL AND [IsDeleted] = 0");
+
+        modelBuilder.Entity<TokenBlacklist>()
+            .HasIndex(b => b.OriginalExpiresAt)
+            .HasFilter("[IsDeleted] = 0");
     }
 
     /// <summary>
