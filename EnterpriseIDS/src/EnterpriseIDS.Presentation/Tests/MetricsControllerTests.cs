@@ -146,11 +146,11 @@ public class MetricsControllerTests
     public void RecordTestMetrics_ShouldReturnBadRequest_WithNullRequest()
     {
         // Act
-        var result = _controller.RecordTestMetrics(null);
+        var result = _controller.RecordTestMetrics(null!);
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
-        Assert.Contains("請提供有效的測試指標請求", badRequestResult.Value.ToString());
+        Assert.Contains("請提供有效的測試指標請求", badRequestResult.Value?.ToString() ?? "");
     }
 
     [Fact]
@@ -199,7 +199,7 @@ public class MetricsControllerTests
 
     [Theory]
     [InlineData("", "", "")]
-    [InlineData(null, null, null)]
+    [InlineData("  ", "  ", "  ")]
     public void RecordTestMetrics_ShouldSkipEmptyValues(string authResult, string tokenType, string tenantId)
     {
         // Arrange

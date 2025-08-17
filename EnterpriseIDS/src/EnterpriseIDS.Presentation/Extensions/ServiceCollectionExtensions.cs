@@ -16,7 +16,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddMonitoringServices(this IServiceCollection services)
     {
         // 註冊健康檢查服務
-        services.AddTransient<IHealthCheckService, HealthCheckService>();
+        services.AddTransient<IHealthCheckService, EnterpriseIDS.Application.Services.HealthCheckService>();
         
         // 註冊指標收集服務
         services.AddSingleton<MetricsCollectionService>();

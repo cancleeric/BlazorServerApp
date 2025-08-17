@@ -47,8 +47,8 @@ public class TenantResolutionMiddleware
                 _logger.LogDebug("租戶解析成功: {TenantSlug} ({TenantId})", tenant.Slug, tenant.Id);
 
                 // 添加租戶資訊到回應標頭
-                context.Response.Headers.Add("X-Tenant-ID", tenant.Id.ToString());
-                context.Response.Headers.Add("X-Tenant-Slug", tenant.Slug);
+                context.Response.Headers["X-Tenant-ID"] = tenant.Id.ToString();
+                context.Response.Headers["X-Tenant-Slug"] = tenant.Slug;
             }
             else
             {
@@ -281,7 +281,7 @@ public class TenantLoggingMiddleware
         // 添加租戶資訊到回應標頭（用於除錯）
         if (tenantId.HasValue)
         {
-            context.Response.Headers.Add("X-Debug-Tenant-ID", tenantId.ToString());
+            context.Response.Headers["X-Debug-Tenant-ID"] = tenantId.ToString();
         }
 
         var startTime = DateTime.UtcNow;

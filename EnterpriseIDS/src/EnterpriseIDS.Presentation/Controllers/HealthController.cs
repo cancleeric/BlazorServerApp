@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using System.Diagnostics;
 using EnterpriseIDS.Core.Interfaces;
 using EnterpriseIDS.Core.ValueObjects;
 
