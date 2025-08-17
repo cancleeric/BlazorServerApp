@@ -1,0 +1,19 @@
+http.host: "0.0.0.0"
+xpack.monitoring.enabled: false
+xpack.monitoring.elasticsearch.hosts: ["http://elasticsearch:9200"]
+
+# Pipeline 設定
+pipeline.workers: 2
+pipeline.batch.size: 125
+pipeline.batch.delay: 50
+
+# 日誌設定
+log.level: info
+path.logs: /var/log/logstash
+
+# 設定重載
+config.reload.automatic: true
+config.reload.interval: 3s
+
+# JVM 設定
+pipeline.ecs_compatibility: disabled

@@ -1,0 +1,32 @@
+server.name: enterprise-ids-kibana
+server.host: "0.0.0.0"
+server.port: 5601
+
+elasticsearch.hosts: ["http://elasticsearch:9200"]
+elasticsearch.requestTimeout: 30000
+
+# 安全設定
+xpack.security.enabled: false
+xpack.monitoring.ui.container.elasticsearch.enabled: true
+
+# 日誌設定
+logging.dest: /var/log/kibana/kibana.log
+logging.level: info
+logging.quiet: false
+logging.rotate.enabled: true
+logging.rotate.everyBytes: 10485760
+
+# 國際化設定
+i18n.locale: "zh-TW"
+
+# Dashboard 設定
+kibana.index: ".kibana"
+kibana.defaultAppId: "dashboard"
+
+# 進階設定
+elasticsearch.shardTimeout: 30000
+elasticsearch.pingTimeout: 1500
+elasticsearch.startupTimeout: 5000
+
+# 開發模式設定
+# status.allowAnonymous: true

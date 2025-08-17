@@ -1,0 +1,175 @@
+version: '3.8'
+
+services:
+  # Prometheus - 指標收集和儲存
+  prometheus:
+    image: prom/prometheus:v2.40.7
+    container_name: enterprise-ids-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/rules:/etc/prometheus/rules
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+      - '--storage.tsdb.retention.time=30d'
+    networks:
+      - monitoring
+
+  # Grafana - 資料視覺化儀表板
+  grafana:
+    image: grafana/grafana:9.3.6
+    container_name: enterprise-ids-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - monitoring
+
+  # Elasticsearch - 日誌儲存
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.6.2
+    container_name: enterprise-ids-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - xpack.security.enabled=false
+      - xpack.monitoring.collection.enabled=true
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Kibana - 日誌分析和視覺化
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.6.2
+    container_name: enterprise-ids-kibana
+    restart: unless-stopped
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - xpack.security.enabled=false
+    volumes:
+      - ./monitoring/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
+    networks:
+      - monitoring
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  # Logstash - 日誌處理管道
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.6.2
+    container_name: enterprise-ids-logstash
+    restart: unless-stopped
+    ports:
+      - "5044:5044"
+      - "9600:9600"
+    environment:
+      - "LS_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - ./monitoring/logstash/pipeline:/usr/share/logstash/pipeline
+      - ./monitoring/logstash/logstash.yml:/usr/share/logstash/config/logstash.yml
+    networks:
+      - monitoring
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  # AlertManager - 告警管理
+  alertmanager:
+    image: prom/alertmanager:v0.25.0
+    container_name: enterprise-ids-alertmanager
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+    networks:
+      - monitoring
+
+  # Node Exporter - 系統指標收集
+  node-exporter:
+    image: prom/node-exporter:v1.5.0
+    container_name: enterprise-ids-node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - monitoring
+
+  # Redis - 快取和會話儲存 (監控目標)
+  redis:
+    image: redis:7.0-alpine
+    container_name: enterprise-ids-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - monitoring
+
+  # Redis Exporter - Redis 指標收集
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.45.0
+    container_name: enterprise-ids-redis-exporter
+    restart: unless-stopped
+    ports:
+      - "9121:9121"
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    networks:
+      - monitoring
+    depends_on:
+      - redis
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  elasticsearch_data:
+  alertmanager_data:
+  redis_data:
+
+networks:
+  monitoring:
+    driver: bridge

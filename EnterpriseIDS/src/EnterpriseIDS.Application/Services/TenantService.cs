@@ -453,7 +453,7 @@ public class TenantService : ITenantService
         // 檢查 Slug 唯一性
         if (!string.IsNullOrWhiteSpace(tenant.Slug))
         {
-            var excludeId = isCreate ? null : tenant.Id;
+            var excludeId = isCreate ? (Guid?)null : tenant.Id;
             var slugExists = await IsSlugExistsAsync(tenant.Slug, excludeId, cancellationToken);
             if (slugExists)
                 errors.Add("租戶標識符已存在");
@@ -462,7 +462,7 @@ public class TenantService : ITenantService
         // 檢查網域唯一性
         if (!string.IsNullOrWhiteSpace(tenant.PrimaryDomain))
         {
-            var excludeId = isCreate ? null : tenant.Id;
+            var excludeId = isCreate ? (Guid?)null : tenant.Id;
             var domainExists = await IsDomainExistsAsync(tenant.PrimaryDomain, excludeId, cancellationToken);
             if (domainExists)
                 errors.Add("主要網域已被使用");

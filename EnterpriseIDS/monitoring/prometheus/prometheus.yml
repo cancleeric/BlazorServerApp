@@ -1,0 +1,79 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'enterprise-ids'
+    environment: 'production'
+
+rule_files:
+  - "rules/*.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Prometheus 自身監控
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # Enterprise Identity Server 主應用程式
+  - job_name: 'enterprise-identity-server'
+    static_configs:
+      - targets: ['host.docker.internal:5000', 'host.docker.internal:5001']
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scrape_timeout: 10s
+    scheme: http
+    honor_labels: true
+
+  # Enterprise Identity Server 健康檢查
+  - job_name: 'enterprise-ids-health'
+    static_configs:
+      - targets: ['host.docker.internal:5000', 'host.docker.internal:5001']
+    scrape_interval: 30s
+    metrics_path: /health
+    scrape_timeout: 5s
+    scheme: http
+
+  # Node Exporter (系統指標)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+
+  # Redis 指標
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 30s
+
+  # AlertManager 監控
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: ['alertmanager:9093']
+    scrape_interval: 30s
+
+  # Grafana 監控
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+    scrape_interval: 60s
+    metrics_path: /metrics
+
+# 遠端寫入配置 (如果需要長期儲存)
+# remote_write:
+#   - url: "http://long-term-storage:9201/api/v1/write"
+#     queue_config:
+#       max_samples_per_send: 1000
+#       max_shards: 200
+#       capacity: 2500
+
+# 遠端讀取配置 (如果需要查詢歷史資料)
+# remote_read:
+#   - url: "http://long-term-storage:9201/api/v1/read"

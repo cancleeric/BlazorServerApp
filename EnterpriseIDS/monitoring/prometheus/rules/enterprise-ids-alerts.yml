@@ -1,0 +1,181 @@
+groups:
+  - name: enterprise-ids-health
+    rules:
+      # P1 - 關鍵服務不可用
+      - alert: ServiceDown
+        expr: up{job="enterprise-identity-server"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          priority: P1
+          service: enterprise-ids
+        annotations:
+          summary: "Enterprise Identity Server 服務不可用"
+          description: "服務 {{ $labels.instance }} 已經停止回應超過 1 分鐘"
+          runbook_url: "https://wiki.company.com/runbooks/enterprise-ids-service-down"
+
+      # P1 - 健康檢查失敗
+      - alert: HealthCheckFailed
+        expr: enterprise_ids_health_check_status{component!="unknown"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          priority: P1
+          service: enterprise-ids
+        annotations:
+          summary: "Enterprise Identity Server 健康檢查失敗"
+          description: "組件 {{ $labels.component }} 健康檢查失敗超過 2 分鐘"
+          runbook_url: "https://wiki.company.com/runbooks/enterprise-ids-health-check"
+
+  - name: enterprise-ids-performance
+    rules:
+      # P2 - 高回應時間
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(enterprise_ids_http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          priority: P2
+          service: enterprise-ids
+        annotations:
+          summary: "Enterprise Identity Server 回應時間過高"
+          description: "95% 的請求回應時間超過 2 秒，持續 5 分鐘"
+          runbook_url: "https://wiki.company.com/runbooks/enterprise-ids-performance"
+
+      # P2 - 高錯誤率
+      - alert: HighErrorRate
+        expr: (rate(enterprise_ids_http_requests_total{status_code=~"5.."}[5m]) / rate(enterprise_ids_http_requests_total[5m])) * 100 > 5
+        for: 3m
+        labels:
+          severity: warning
+          priority: P2
+          service: enterprise-ids
+        annotations:
+          summary: "Enterprise Identity Server 錯誤率過高"
+          description: "HTTP 5xx 錯誤率超過 5%，持續 3 分鐘"
+          runbook_url: "https://wiki.company.com/runbooks/enterprise-ids-errors"
+
+      # P3 - 認證失敗率過高
+      - alert: HighAuthenticationFailureRate
+        expr: (rate(enterprise_ids_authentication_attempts_total{result="failed"}[10m]) / rate(enterprise_ids_authentication_attempts_total[10m])) * 100 > 20
+        for: 5m
+        labels:
+          severity: warning
+          priority: P3
+          service: enterprise-ids
+        annotations:
+          summary: "認證失敗率過高"
+          description: "認證失敗率超過 20%，持續 5 分鐘，可能有安全問題"
+          runbook_url: "https://wiki.company.com/runbooks/enterprise-ids-auth-failures"
+
+  - name: enterprise-ids-resources
+    rules:
+      # P2 - 記憶體使用率過高
+      - alert: HighMemoryUsage
+        expr: (enterprise_ids_memory_usage_bytes / (1024*1024*1024)) > 2
+        for: 5m
+        labels:
+          severity: warning
+          priority: P2
+          service: enterprise-ids
+        annotations:
+          summary: "Enterprise Identity Server 記憶體使用率過高"
+          description: "記憶體使用量超過 2GB，持續 5 分鐘"
+          runbook_url: "https://wiki.company.com/runbooks/enterprise-ids-memory"
+
+      # P3 - CPU 使用率過高
+      - alert: HighCpuUsage
+        expr: enterprise_ids_cpu_usage_percent > 80
+        for: 10m
+        labels:
+          severity: warning
+          priority: P3
+          service: enterprise-ids
+        annotations:
+          summary: "Enterprise Identity Server CPU 使用率過高"
+          description: "CPU 使用率超過 80%，持續 10 分鐘"
+          runbook_url: "https://wiki.company.com/runbooks/enterprise-ids-cpu"
+
+  - name: enterprise-ids-ldap
+    rules:
+      # P2 - LDAP 連線失敗
+      - alert: LdapConnectionFailure
+        expr: rate(enterprise_ids_ldap_operations_total{result="failed"}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          priority: P2
+          service: enterprise-ids
+        annotations:
+          summary: "LDAP 連線失敗率過高"
+          description: "LDAP 操作失敗率超過閾值，持續 2 分鐘"
+          runbook_url: "https://wiki.company.com/runbooks/enterprise-ids-ldap"
+
+      # P3 - LDAP 回應時間過長
+      - alert: LdapSlowResponse
+        expr: histogram_quantile(0.95, rate(enterprise_ids_ldap_operation_duration_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          priority: P3
+          service: enterprise-ids
+        annotations:
+          summary: "LDAP 回應時間過長"
+          description: "95% 的 LDAP 操作回應時間超過 5 秒"
+          runbook_url: "https://wiki.company.com/runbooks/enterprise-ids-ldap-performance"
+
+  - name: enterprise-ids-business
+    rules:
+      # P3 - Token 發行量異常
+      - alert: AbnormalTokenIssuance
+        expr: rate(enterprise_ids_tokens_issued_total[1h]) > 1000 or rate(enterprise_ids_tokens_issued_total[1h]) < 10
+        for: 15m
+        labels:
+          severity: info
+          priority: P3
+          service: enterprise-ids
+        annotations:
+          summary: "Token 發行量異常"
+          description: "Token 發行量過高(>1000/h) 或過低(<10/h)，可能需要關注"
+          runbook_url: "https://wiki.company.com/runbooks/enterprise-ids-tokens"
+
+      # P4 - 活躍會話數異常
+      - alert: UnusualActiveSessionCount
+        expr: enterprise_ids_active_sessions > 10000 or enterprise_ids_active_sessions < 1
+        for: 30m
+        labels:
+          severity: info
+          priority: P4
+          service: enterprise-ids
+        annotations:
+          summary: "活躍會話數異常"
+          description: "活躍會話數異常：{{ $value }}，可能需要檢查"
+          runbook_url: "https://wiki.company.com/runbooks/enterprise-ids-sessions"
+
+  - name: enterprise-ids-system
+    rules:
+      # P1 - 磁碟空間不足
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 10
+        for: 1m
+        labels:
+          severity: critical
+          priority: P1
+          service: system
+        annotations:
+          summary: "磁碟空間不足"
+          description: "根目錄磁碟空間不足 10%"
+          runbook_url: "https://wiki.company.com/runbooks/disk-space"
+
+      # P2 - 系統負載過高
+      - alert: HighSystemLoad
+        expr: node_load15 > 4
+        for: 5m
+        labels:
+          severity: warning
+          priority: P2
+          service: system
+        annotations:
+          summary: "系統負載過高"
+          description: "15 分鐘平均負載超過 4"
+          runbook_url: "https://wiki.company.com/runbooks/system-load"

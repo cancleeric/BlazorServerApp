@@ -1,0 +1,206 @@
+global:
+  # SMTP 設定
+  smtp_smarthost: 'smtp.company.com:587'
+  smtp_from: 'enterprise-ids-alerts@company.com'
+  smtp_auth_username: 'enterprise-ids-alerts@company.com'
+  smtp_auth_password: 'your-smtp-password'
+  smtp_require_tls: true
+
+  # Slack 設定
+  slack_api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+
+  # 預設通知模板
+  resolve_timeout: 5m
+
+# 告警路由規則
+route:
+  group_by: ['alertname', 'priority', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 12h
+  receiver: 'default-receiver'
+  
+  routes:
+    # P1 - 關鍵告警 (立即通知)
+    - match:
+        priority: P1
+      receiver: 'critical-alerts'
+      group_wait: 10s
+      group_interval: 2m
+      repeat_interval: 5m
+      continue: true
+
+    # P2 - 重要告警 (快速通知)
+    - match:
+        priority: P2
+      receiver: 'important-alerts'
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 30m
+      continue: true
+
+    # P3 - 一般告警 (標準通知)
+    - match:
+        priority: P3
+      receiver: 'standard-alerts'
+      group_wait: 1m
+      group_interval: 10m
+      repeat_interval: 2h
+
+    # P4 - 資訊告警 (摘要通知)
+    - match:
+        priority: P4
+      receiver: 'info-alerts'
+      group_wait: 5m
+      group_interval: 30m
+      repeat_interval: 24h
+
+    # 業務時間外的告警處理
+    - match_re:
+        alertname: '.*'
+      receiver: 'after-hours-alerts'
+      active_time_intervals:
+        - 'after-hours'
+
+# 通知接收者配置
+receivers:
+  # 預設接收者
+  - name: 'default-receiver'
+    email_configs:
+      - to: 'ops-team@company.com'
+        subject: '[Enterprise IDS] 監控告警: {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          告警名稱: {{ .Annotations.summary }}
+          描述: {{ .Annotations.description }}
+          嚴重程度: {{ .Labels.severity }}
+          優先級: {{ .Labels.priority }}
+          服務: {{ .Labels.service }}
+          時間: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          {{ if .Annotations.runbook_url }}
+          處理手冊: {{ .Annotations.runbook_url }}
+          {{ end }}
+          {{ end }}
+
+  # P1 關鍵告警 - 多管道通知
+  - name: 'critical-alerts'
+    email_configs:
+      - to: 'sre-oncall@company.com,ops-manager@company.com'
+        subject: '🚨 [P1-CRITICAL] Enterprise IDS: {{ .GroupLabels.alertname }}'
+        body: |
+          ⚠️ 關鍵告警 - 需要立即處理
+          
+          {{ range .Alerts }}
+          📋 告警詳情:
+          • 名稱: {{ .Annotations.summary }}
+          • 描述: {{ .Annotations.description }}
+          • 服務: {{ .Labels.service }}
+          • 實例: {{ .Labels.instance }}
+          • 開始時間: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          🔧 處理指南: {{ .Annotations.runbook_url }}
+          {{ end }}
+    
+    slack_configs:
+      - channel: '#enterprise-ids-alerts'
+        title: '🚨 P1 關鍵告警'
+        text: |
+          {{ range .Alerts }}
+          *{{ .Annotations.summary }}*
+          描述: {{ .Annotations.description }}
+          服務: {{ .Labels.service }}
+          處理手冊: {{ .Annotations.runbook_url }}
+          {{ end }}
+        color: 'danger'
+
+  # P2 重要告警
+  - name: 'important-alerts'
+    email_configs:
+      - to: 'ops-team@company.com'
+        subject: '⚠️ [P2-WARNING] Enterprise IDS: {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          告警: {{ .Annotations.summary }}
+          描述: {{ .Annotations.description }}
+          服務: {{ .Labels.service }}
+          時間: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          處理手冊: {{ .Annotations.runbook_url }}
+          {{ end }}
+    
+    slack_configs:
+      - channel: '#enterprise-ids-monitoring'
+        title: '⚠️ P2 重要告警'
+        text: |
+          {{ range .Alerts }}
+          *{{ .Annotations.summary }}*
+          {{ .Annotations.description }}
+          {{ end }}
+        color: 'warning'
+
+  # P3 一般告警
+  - name: 'standard-alerts'
+    email_configs:
+      - to: 'ops-team@company.com'
+        subject: '[P3-INFO] Enterprise IDS: {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          告警: {{ .Annotations.summary }}
+          描述: {{ .Annotations.description }}
+          時間: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+
+  # P4 資訊告警
+  - name: 'info-alerts'
+    email_configs:
+      - to: 'ops-team@company.com'
+        subject: '[P4-INFO] Enterprise IDS 資訊摘要'
+        body: |
+          以下是 Enterprise IDS 的資訊告警摘要:
+          {{ range .Alerts }}
+          • {{ .Annotations.summary }}
+          {{ end }}
+
+  # 業務時間外告警
+  - name: 'after-hours-alerts'
+    email_configs:
+      - to: 'oncall-engineer@company.com'
+        subject: '[非上班時間] Enterprise IDS 告警: {{ .GroupLabels.alertname }}'
+        body: |
+          這是非上班時間的告警通知。
+          {{ range .Alerts }}
+          告警: {{ .Annotations.summary }}
+          優先級: {{ .Labels.priority }}
+          {{ if eq .Labels.priority "P1" }}
+          ⚠️ 這是 P1 關鍵告警，建議立即處理
+          {{ end }}
+          {{ end }}
+
+# 抑制規則 - 避免重複告警
+inhibit_rules:
+  # 服務下線時抑制其他相關告警
+  - source_match:
+      alertname: 'ServiceDown'
+    target_match:
+      service: 'enterprise-ids'
+    equal: ['instance']
+
+  # 關鍵告警發生時抑制較低優先級告警
+  - source_match:
+      priority: 'P1'
+    target_match_re:
+      priority: 'P[234]'
+    equal: ['service', 'instance']
+
+# 時間間隔定義
+time_intervals:
+  - name: 'after-hours'
+    time_intervals:
+      - times:
+        - start_time: '18:00'
+          end_time: '09:00'
+      - weekdays: ['saturday', 'sunday']
+
+# 模板設定
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
