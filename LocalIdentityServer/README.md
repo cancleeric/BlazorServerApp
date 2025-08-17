@@ -1,16 +1,32 @@
 # LocalIdentityServer
 
-**本專案已完成 OAuth2 + OpenID Connect 認證伺服器的核心實作**，支援本地第三方登入授權（類似 Google / Facebook / Azure AD）的輕量級認證伺服器。
+# LocalIdentityServer
 
-## 🎯 主要功能 (已實作)
+**企業級 OAuth2/OIDC 認證伺服器** - 基於 .NET 8 + SQLite，專為企業內部系統 SSO 認證設計。
 
-✅ **OAuth2 授權碼流程** (Authorization Code Flow with PKCE)  
-✅ **OpenID Connect 支援** (ID Token、UserInfo、Discovery)  
-✅ **JWT Token 發行** (Access Token & ID Token)  
-✅ **Refresh Token 機制**  
-✅ **EF Core + SQLite 資料庫**  
-✅ **Repository Pattern 架構**  
-✅ **模組化端點設計**  
+## 🎯 主要功能
+
+### 🏢 企業級特性
+
+✅ **高安全性**: JWT RS256 簽章、PKCE 支援、BCrypt 密碼雜湊  
+✅ **高可靠性**: EF Core + 資料庫持久化、Repository Pattern 架構  
+✅ **可擴展性**: 模組化設計、依賴注入、SOLID 原則  
+✅ **易維護性**: 完整錯誤處理、結構化日誌、清晰程式碼結構  
+
+### 🔐 OAuth2/OIDC 核心功能
+
+✅ **Authorization Code Flow**: 含 PKCE 安全增強  
+✅ **OpenID Connect**: ID Token、UserInfo、Discovery 完整支援  
+✅ **多種授權模式**: Client Credentials、Password Grant  
+✅ **Token 管理**: JWT Access Token、ID Token、Refresh Token  
+✅ **安全機制**: 一次性授權碼、權限範圍驗證、Token 輪替  
+
+### 🏗️ 技術架構
+
+✅ **現代技術棧**: ASP.NET Core 8.0、Entity Framework Core 9.0.8  
+✅ **企業級資料庫**: SQLite (可升級至 PostgreSQL/SQL Server)  
+✅ **設計模式**: Repository Pattern、Dependency Injection  
+✅ **API 設計**: RESTful、OpenAPI 文件、端點分離  
 
 ## 🚀 快速啟動
 
