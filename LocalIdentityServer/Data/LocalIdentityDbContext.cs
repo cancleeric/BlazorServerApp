@@ -26,6 +26,9 @@ public class LocalIdentityDbContext : DbContext
     public DbSet<UserMfaEntity> UserMfaMethods { get; set; } = default!;
     public DbSet<MfaBackupCodeEntity> MfaBackupCodes { get; set; } = default!;
     public DbSet<MfaAuditLogEntity> MfaAuditLogs { get; set; } = default!;
+    
+    // Token 管理相關實體
+    public DbSet<TokenBlacklistEntity> TokenBlacklist { get; set; } = default!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -50,6 +53,9 @@ public class LocalIdentityDbContext : DbContext
         ConfigureUserMfaEntity(modelBuilder);
         ConfigureMfaBackupCodeEntity(modelBuilder);
         ConfigureMfaAuditLogEntity(modelBuilder);
+        
+        // 配置 Token 管理相關實體
+        ConfigureTokenBlacklistEntity(modelBuilder);
     }
 
     /// <summary>
@@ -373,6 +379,59 @@ public class LocalIdentityDbContext : DbContext
 
             entity.Property(e => e.RiskScore)
                 .HasDefaultValue(0);
+        });
+    }
+
+    /// <summary>
+    /// 配置 Token 黑名單實體
+    /// </summary>
+    private static void ConfigureTokenBlacklistEntity(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<TokenBlacklistEntity>(entity =>
+        {
+            // 主鍵
+            entity.HasKey(e => e.Id);
+
+            // 唯一索引 - Token ID
+            entity.HasIndex(e => e.TokenId)
+                .IsUnique()
+                .HasDatabaseName("IX_TokenBlacklist_TokenId");
+
+            // 索引 - Token Hash (用於快速查詢)
+            entity.HasIndex(e => e.TokenHash)
+                .IsUnique()
+                .HasDatabaseName("IX_TokenBlacklist_TokenHash");
+
+            // 索引 - 過期時間 (用於清理作業)
+            entity.HasIndex(e => e.ExpiresAt)
+                .HasDatabaseName("IX_TokenBlacklist_ExpiresAt");
+
+            // 索引 - 客戶端 ID
+            entity.HasIndex(e => e.ClientId)
+                .HasDatabaseName("IX_TokenBlacklist_ClientId");
+
+            // 索引 - 使用者 ID
+            entity.HasIndex(e => e.Subject)
+                .HasDatabaseName("IX_TokenBlacklist_Subject");
+
+            // 索引 - 撤銷時間
+            entity.HasIndex(e => e.RevokedAt)
+                .HasDatabaseName("IX_TokenBlacklist_RevokedAt");
+
+            // 複合索引 - 客戶端和撤銷時間
+            entity.HasIndex(e => new { e.ClientId, e.RevokedAt })
+                .HasDatabaseName("IX_TokenBlacklist_Client_RevokedAt");
+
+            // 複合索引 - 使用者和撤銷時間
+            entity.HasIndex(e => new { e.Subject, e.RevokedAt })
+                .HasDatabaseName("IX_TokenBlacklist_Subject_RevokedAt");
+
+            // 屬性配置
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("datetime('now')");
+
+            entity.Property(e => e.RevokedAt)
+                .HasDefaultValueSql("datetime('now')");
         });
     }
 }

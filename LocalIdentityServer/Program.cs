@@ -37,6 +37,7 @@ builder.Services.AddScoped<IClientRepository, ClientRepository>();
 builder.Services.AddScoped<IAuthorizationCodeRepository, AuthorizationCodeRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IPersistedKeyRepository, PersistedKeyRepository>();
+builder.Services.AddScoped<ITokenBlacklistRepository, TokenBlacklistRepository>();
 
 // MFA Repository 註冊
 builder.Services.AddScoped<LocalIdentityServer.Data.Repositories.IMfaRepository, LocalIdentityServer.Data.Repositories.MfaRepository>();
@@ -46,6 +47,9 @@ builder.Services.AddScoped<LocalIdentityServer.Data.Repositories.IMfaAuditReposi
 // Services 註冊
 builder.Services.AddScoped<ITokenService, DefaultTokenService>();
 builder.Services.AddScoped<IErrorService, DefaultErrorService>();
+builder.Services.AddScoped<ITokenIntrospectionService, TokenIntrospectionService>();
+builder.Services.AddScoped<ITokenRevocationService, TokenRevocationService>();
+builder.Services.AddScoped<IEndSessionService, EndSessionService>();
 
 // Refresh Token 輪替服務
 builder.Services.AddScoped<IRefreshTokenRotationService, RefreshTokenRotationService>();
@@ -162,6 +166,9 @@ app.MapDiscoveryEndpoints();
 app.MapAuthenticationEndpoints();
 app.MapAuthorizationEndpoints();
 app.MapUserInfoEndpoints();
+app.MapIntrospectionEndpoints();
+app.MapRevocationEndpoints();
+app.MapEndSessionEndpoints();
 
 // MFA API Controllers
 app.MapControllers();

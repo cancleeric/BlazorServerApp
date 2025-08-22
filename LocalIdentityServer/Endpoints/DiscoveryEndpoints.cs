@@ -44,7 +44,7 @@ public static class DiscoveryEndpoints
             userinfo_endpoint = $"{issuer}/connect/userinfo",
             end_session_endpoint = $"{issuer}/connect/logout",
             jwks_uri = $"{issuer}/.well-known/jwks.json",
-            response_types_supported = new[] { "code", "token" },
+            response_types_supported = new[] { "code", "token", "id_token", "id_token token" },
             subject_types_supported = new[] { "public" },
             id_token_signing_alg_values_supported = new[] { "RS256" },
             scopes_supported = new[] { "openid", "profile", "email", "api.read", "api.write" },

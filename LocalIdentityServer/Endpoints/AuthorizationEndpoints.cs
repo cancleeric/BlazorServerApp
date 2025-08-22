@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using LocalIdentityServer.Models;
 using LocalIdentityServer.Services;
 using LocalIdentityServer.Stores;
+using LocalIdentityServer.Data.Repositories;
 using System.IdentityModel.Tokens.Jwt;
 
 namespace LocalIdentityServer.Endpoints;
@@ -47,6 +48,8 @@ public static class AuthorizationEndpoints
         HttpContext context,
         IAuthorizationCodeStore codeStore,
         IErrorService errorService,
+        IPersistedKeyRepository keyRepository,
+        IConfiguration config,
         [FromServices] IList<TestClient> clients)
     {
         try
@@ -70,11 +73,20 @@ public static class AuthorizationEndpoints
                 return Results.Empty;
             }
 
-            // 產生授權碼
-            var authCode = await GenerateAuthorizationCode(context, request, codeStore);
-
-            // 重導向回客戶端
-            var location = BuildAuthorizationResponse(request, authCode);
+            // 根據 response_type 處理不同的授權流程
+            string location;
+            if (request.ResponseType == "code")
+            {
+                // Authorization Code Flow
+                var authCode = await GenerateAuthorizationCode(context, request, codeStore);
+                location = BuildAuthorizationResponse(request, authCode);
+            }
+            else
+            {
+                // Implicit Flow - 直接生成 Token
+                location = await BuildImplicitFlowResponse(context, request, keyRepository, config);
+            }
+            
             context.Response.Redirect(location);
 
             return Results.Empty;
@@ -186,11 +198,12 @@ public static class AuthorizationEndpoints
                 "Missing required parameters: response_type, client_id, or redirect_uri");
         }
 
-        // 回應類型檢查
-        if (request.ResponseType != "code")
+        // 回應類型檢查 - 支援 Authorization Code 和 Implicit Flow
+        var supportedResponseTypes = new[] { "code", "token", "id_token", "id_token token" };
+        if (!supportedResponseTypes.Contains(request.ResponseType))
         {
             return errorService.BuildErrorPageUrl(AuthorizationErrors.UnsupportedResponseType,
-                "Only authorization code flow is supported");
+                $"Unsupported response_type: {request.ResponseType}. Supported types: {string.Join(", ", supportedResponseTypes)}");
         }
 
         // 客戶端驗證
@@ -481,6 +494,208 @@ public static class AuthorizationEndpoints
         });
 
         return Results.Empty;
+    }
+
+    /// <summary>
+    /// 建立 Implicit Flow 回應 (RFC 6749 Section 4.2)
+    /// </summary>
+    private static async Task<string> BuildImplicitFlowResponse(
+        HttpContext context,
+        AuthorizationRequest request,
+        IPersistedKeyRepository keyRepository,
+        IConfiguration config)
+    {
+        var user = context.User;
+        var userId = user.FindFirst("sub")?.Value ?? user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var username = user.FindFirst("name")?.Value ?? user.Identity?.Name;
+        var email = user.FindFirst("email")?.Value ?? user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+
+        var fragmentParams = new List<string>();
+
+        // 解析請求的 scope
+        var scopes = request.Scope?.Split(' ') ?? new[] { "openid" };
+
+        try
+        {
+            // 根據 response_type 生成對應的 Token
+            if (request.ResponseType.Contains("token"))
+            {
+                // 生成 Access Token
+                var accessToken = await GenerateImplicitAccessToken(userId, username, email, request.ClientId, scopes, keyRepository, config);
+                fragmentParams.Add($"access_token={Uri.EscapeDataString(accessToken)}");
+                fragmentParams.Add("token_type=Bearer");
+                
+                // 設定過期時間 (通常 Implicit Flow 的 Token 有較短的生命週期)
+                var expiresIn = int.Parse(config["Jwt:AccessTokenExpirationMinutes"] ?? "60") * 60;
+                fragmentParams.Add($"expires_in={expiresIn}");
+            }
+
+            if (request.ResponseType.Contains("id_token"))
+            {
+                // 生成 ID Token
+                var idToken = await GenerateImplicitIdToken(userId, username, email, request.ClientId, scopes, keyRepository, config, request.Nonce);
+                fragmentParams.Add($"id_token={Uri.EscapeDataString(idToken)}");
+            }
+
+            // 添加 scope 和 state
+            if (!string.IsNullOrEmpty(request.Scope))
+            {
+                fragmentParams.Add($"scope={Uri.EscapeDataString(request.Scope)}");
+            }
+
+            if (!string.IsNullOrEmpty(request.State))
+            {
+                fragmentParams.Add($"state={Uri.EscapeDataString(request.State)}");
+            }
+
+            // 建構重導向 URI with fragment
+            var fragment = string.Join("&", fragmentParams);
+            return $"{request.RedirectUri}#{fragment}";
+        }
+        catch (Exception ex)
+        {
+            // 發生錯誤時重導向錯誤
+            var errorFragment = $"error=server_error&error_description={Uri.EscapeDataString("Failed to generate tokens")}";
+            if (!string.IsNullOrEmpty(request.State))
+            {
+                errorFragment += $"&state={Uri.EscapeDataString(request.State)}";
+            }
+            return $"{request.RedirectUri}#{errorFragment}";
+        }
+    }
+
+    /// <summary>
+    /// 為 Implicit Flow 生成 Access Token
+    /// </summary>
+    private static async Task<string> GenerateImplicitAccessToken(
+        string? userId,
+        string? username,
+        string? email,
+        string clientId,
+        string[] scopes,
+        IPersistedKeyRepository keyRepository,
+        IConfiguration config)
+    {
+        var key = await keyRepository.GetPrimarySigningKeyAsync();
+        if (key == null)
+        {
+            throw new InvalidOperationException("找不到主要簽名金鑰");
+        }
+
+        var signingKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(Convert.FromBase64String(key.EncryptedKeyData));
+        var credentials = new Microsoft.IdentityModel.Tokens.SigningCredentials(signingKey, Microsoft.IdentityModel.Tokens.SecurityAlgorithms.HmacSha256);
+
+        var claims = new List<System.Security.Claims.Claim>
+        {
+            new("iss", config["Jwt:Issuer"] ?? "https://localhost:5001"),
+            new("aud", clientId),
+            new("client_id", clientId),
+            new("scope", string.Join(" ", scopes)),
+            new("jti", Guid.NewGuid().ToString())
+        };
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            claims.Add(new System.Security.Claims.Claim("sub", userId));
+        }
+
+        if (!string.IsNullOrEmpty(username))
+        {
+            claims.Add(new System.Security.Claims.Claim("username", username));
+        }
+
+        if (!string.IsNullOrEmpty(email))
+        {
+            claims.Add(new System.Security.Claims.Claim("email", email));
+        }
+
+        var now = DateTime.UtcNow;
+        // Implicit Flow 通常使用較短的過期時間
+        var expires = now.AddMinutes(Math.Min(int.Parse(config["Jwt:AccessTokenExpirationMinutes"] ?? "60"), 60)); // 最多 60 分鐘
+
+        var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(
+            issuer: config["Jwt:Issuer"],
+            audience: clientId,
+            claims: claims,
+            notBefore: now,
+            expires: expires,
+            signingCredentials: credentials
+        );
+
+        return new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    /// <summary>
+    /// 為 Implicit Flow 生成 ID Token
+    /// </summary>
+    private static async Task<string> GenerateImplicitIdToken(
+        string? userId,
+        string? username,
+        string? email,
+        string clientId,
+        string[] scopes,
+        IPersistedKeyRepository keyRepository,
+        IConfiguration config,
+        string? nonce)
+    {
+        var key = await keyRepository.GetPrimarySigningKeyAsync();
+        if (key == null)
+        {
+            throw new InvalidOperationException("找不到主要簽名金鑰");
+        }
+
+        var signingKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(Convert.FromBase64String(key.EncryptedKeyData));
+        var credentials = new Microsoft.IdentityModel.Tokens.SigningCredentials(signingKey, Microsoft.IdentityModel.Tokens.SecurityAlgorithms.HmacSha256);
+
+        var claims = new List<System.Security.Claims.Claim>
+        {
+            new("iss", config["Jwt:Issuer"] ?? "https://localhost:5001"),
+            new("aud", clientId),
+            new("auth_time", new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds().ToString()),
+            new("iat", new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds().ToString())
+        };
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            claims.Add(new System.Security.Claims.Claim("sub", userId));
+        }
+
+        if (scopes.Contains("profile") && !string.IsNullOrEmpty(username))
+        {
+            claims.AddRange(new[]
+            {
+                new System.Security.Claims.Claim("name", username),
+                new System.Security.Claims.Claim("preferred_username", username)
+            });
+        }
+
+        if (scopes.Contains("email") && !string.IsNullOrEmpty(email))
+        {
+            claims.AddRange(new[]
+            {
+                new System.Security.Claims.Claim("email", email),
+                new System.Security.Claims.Claim("email_verified", "true")
+            });
+        }
+
+        if (!string.IsNullOrEmpty(nonce))
+        {
+            claims.Add(new System.Security.Claims.Claim("nonce", nonce));
+        }
+
+        var now = DateTime.UtcNow;
+        var expires = now.AddMinutes(int.Parse(config["Jwt:IdTokenExpirationMinutes"] ?? "60"));
+
+        var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(
+            issuer: config["Jwt:Issuer"],
+            audience: clientId,
+            claims: claims,
+            notBefore: now,
+            expires: expires,
+            signingCredentials: credentials
+        );
+
+        return new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().WriteToken(token);
     }
 
     #endregion
